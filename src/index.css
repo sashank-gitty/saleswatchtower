@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ---------------------------------------------------------------------
+   Design tokens.
+
+   Every hex below is lifted from the reference product's computed CSS
+   rather than sampled off a screenshot, so these are the ground truth
+   the rest of the app styles against. Two families do the work:
+
+   - brand-*  the accent blue ramp, anchored on brand-600 (#0989e5) —
+              links, active states, stat numbers, chart strokes.
+   - navy-*   the deep end, anchored on navy-900 (#012167) — primary
+              buttons and the dark stop of every brand gradient.
+
+   The neutrals are the single biggest "feels premium" detail: body copy
+   is a desaturated blue-slate (#41566c), not a pure grey. Headlines go
+   almost-black-blue (#09172b). Swapping either for Tailwind's stock
+   grey scale is what makes an otherwise identical layout read cheaper.
+   --------------------------------------------------------------------- */
+@theme {
+  /* Tailwind's own default sans stack, deliberately. No webfont: each OS
+     renders its native UI font (San Francisco on macOS, Segoe on
+     Windows), which reads as fast and native rather than as branded. */
+  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol",
+    "Noto Color Emoji";
+  --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
+
+  --color-brand-50: #f2f9fe;
+  --color-brand-100: #e8f4fd;
+  --color-brand-200: #cbe8fb;
+  --color-brand-300: #9ad4f7;
+  --color-brand-400: #56b6f0;
+  --color-brand-500: #1f9ae9;
+  --color-brand-600: #0989e5;
+  --color-brand-700: #0770bd;
+  --color-brand-800: #0a5a94;
+  --color-brand-900: #0b4a76;
+
+  --color-navy-500: #24499b;
+  --color-navy-600: #16388a;
+  --color-navy-700: #0b2c7a;
+  --color-navy-800: #04256e;
+  --color-navy-900: #012167;
+
+  --color-ink-900: #09172b;
+  --color-ink-700: #1e2f47;
+  --color-body-600: #41566c;
+  --color-body-500: #6a7c92;
+
+  --color-page: #fafbfc;
+  --color-section: #f8fafc;
+
+  /* Headline scale. 48px at line-height 51.84px is the reference site's
+     hero exactly — a ~1.08 ratio, far tighter than Tailwind's default,
+     which is most of why the headline reads as a single confident block
+     rather than as stacked lines. */
+  --text-hero: 48px;
+  --text-hero--line-height: 51.84px;
+  --text-hero--font-weight: 700;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-page text-body-600 dark:bg-zinc-950 dark:text-zinc-300;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 dark:bg-zinc-700;
+    border-radius: 999px;
+  }
+}
+
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  /* A gentle overshoot easing so interactive state changes (tab underline,
+     pill toggles, card hover) feel alive rather than mechanically linear. */
+  .ease-spring {
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* The signature hero-word treatment: navy-to-blue clipped to the glyphs.
+     Reserved for one or two words in a major heading — run it across a
+     whole sentence and it stops reading as an accent and starts reading
+     as a gradient. Dark mode lifts both stops, because navy on near-black
+     is unreadable. */
+  .text-gradient-brand {
+    background-image: linear-gradient(135deg, var(--color-navy-900), var(--color-brand-600));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline-block;
+    /* Descenders get clipped by background-clip on some engines without a
+       little breathing room. */
+    padding-bottom: 0.06em;
+  }
+
+  .dark .text-gradient-brand {
+    background-image: linear-gradient(135deg, var(--color-brand-400), var(--color-brand-200));
+  }
+
+  /* The same gradient as a surface — account banners, hero panels. */
+  .bg-gradient-brand {
+    background-image: linear-gradient(135deg, var(--color-navy-900) 0%, var(--color-brand-600) 100%);
+  }
+}

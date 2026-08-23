@@ -1,0 +1,36 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.*
+
+# Territory source spreadsheets. This repository is public; the AE books
+# carry named-customer ARR, renewal dates and lost deal values. They are
+# read from a local path by db/load-territory.mjs and belong in Postgres
+# behind the app's auth, never in git. Ignored by extension so dropping
+# one into the repo directory to run the loader can't become a commit.
+*.xlsx
+*.xlsm
+*.xls
+*.csv
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

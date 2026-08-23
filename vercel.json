@@ -1,0 +1,19 @@
+{
+  "crons": [
+    {
+      "path": "/api/ingest",
+      "schedule": "0 20 * * *"
+    }
+  ],
+  "functions": {
+    "api/ingest.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
