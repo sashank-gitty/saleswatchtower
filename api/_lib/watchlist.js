@@ -14,7 +14,30 @@ import { sql } from "./db.js"
 // watch on your own industry or region's news (a regulator, a market
 // trend). Empty by default; add plain search terms here if you want them,
 // one becomes one RSS query per run.
-export const STANDING_WATCHLIST = []
+//
+// Set to a global + ANZ (Australia/New Zealand) macro-news mix by
+// default for this deployment — broad economic, market and regulatory
+// developments rather than any single company. Edit or clear this array
+// for a different region/focus; it's a plain list, nothing else reads it.
+export const STANDING_WATCHLIST = [
+  // Global macro
+  "global economic outlook",
+  "global markets news",
+  "interest rate decision",
+  "global inflation report",
+  "supply chain disruption",
+  "geopolitical risk business",
+  "AI industry trends",
+  "tech industry layoffs",
+  // Australia / New Zealand macro
+  "Australia economy news",
+  "Reserve Bank of Australia interest rate",
+  "Australian business news",
+  "ASX company news",
+  "Australia regulation business",
+  "New Zealand economy news",
+  "Reserve Bank of New Zealand interest rate",
+]
 
 // A generous cap on how many tracked companies get queried by name in one
 // run, so a very large list can't blow out the ingest function's time

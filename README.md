@@ -174,7 +174,10 @@ Tracked companies (the thing that drives everything):
 6. **Verify ingestion manually before trusting the cron**:
    `curl -H "Authorization: Bearer $CRON_SECRET" https://<your-deploy>/api/ingest`
    and check the response summary (`queried`, `rawItems`, `afterDedupe`,
-   `normalized`, `inserted`, `companyMatched`, `errors`).
+   `normalized`, `inserted`, `companyMatched`, `errors`, `fetchErrors`).
+   A non-empty `fetchErrors` means one of your search terms couldn't be
+   searched at all (network issue) — worth a look if `rawItems` stays at
+   0 for a company you know is in the news.
 
 On watchlist size: each run queries the news once per company you're
 tracking, plus anything you've added to `STANDING_WATCHLIST` in

@@ -50,6 +50,10 @@ export default async function handler(req, res) {
     // matching what the news calls them — check for a spelling mismatch.
     companyMatched: 0,
     errors: [],
+    // RSS fetch failures (a query that couldn't be searched at all —
+    // network issue, feed error, etc.), distinct from `errors` above
+    // (failures normalizing/saving an item that WAS fetched).
+    fetchErrors: [],
     // Set true if the monthly Claude API budget (api/_lib/budget.js) was
     // hit mid-run — the remaining candidates were left un-normalized on
     // purpose, not dropped by a bug.
@@ -74,8 +78,9 @@ export default async function handler(req, res) {
     const existing = await sql`SELECT dedupe_key FROM signals`
     const existingKeys = new Set(existing.map((r) => r.dedupe_key))
 
-    const rawItems = await fetchWatchlist(watchlist)
+    const { items: rawItems, errors: fetchErrors } = await fetchWatchlist(watchlist)
     summary.rawItems = rawItems.length
+    summary.fetchErrors = fetchErrors
 
     const seenInBatch = new Set()
     const candidates = rawItems

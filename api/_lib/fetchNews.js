@@ -1,6 +1,17 @@
 import Parser from "rss-parser"
 
-const parser = new Parser({ timeout: 10000 })
+// A generic non-browser User-Agent (the default one node-fetch/rss-parser
+// sends) sometimes gets a thinner or empty response from Google News —
+// a real browser UA is more reliable. This is the single most common
+// reason a query for a real, newsworthy company can silently come back
+// with zero items.
+const parser = new Parser({
+  timeout: 10000,
+  headers: {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  },
+})
 
 // Locale for Google News results — affects language and which country's
 // coverage gets weighted higher. Defaults to US English; override with
@@ -58,6 +69,11 @@ const CONCURRENCY = 10
 
 export async function fetchWatchlist(watchlist) {
   const results = []
+  // Collected and returned (not just console.error'd) so a run's
+  // response can actually say "these N queries failed and why" instead
+  // of a silent, indistinguishable rawItems:0 — the failure would
+  // otherwise only be visible in Vercel's function logs.
+  const errors = []
   const queue = [...watchlist]
 
   async function worker() {
@@ -68,10 +84,11 @@ export async function fetchWatchlist(watchlist) {
         results.push(...items)
       } catch (err) {
         console.error(`RSS fetch failed for query "${query}":`, err.message)
+        errors.push({ query, message: err.message })
       }
     }
   }
 
   await Promise.all(Array.from({ length: CONCURRENCY }, worker))
-  return results
+  return { items: results, errors }
 }
