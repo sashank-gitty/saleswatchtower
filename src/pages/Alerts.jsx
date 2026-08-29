@@ -97,31 +97,31 @@ function Alerts({ signals, onOpenSignal }) {
   return (
     <>
       <PageHeader
-        title="Alerts"
+        title="Saved Searches"
         actions={
           <Button variant="primary" onClick={() => navigate("/search")}>
             <AlertIcon className="h-4 w-4" />
-            New alert from search
+            Save a new search
           </Button>
         }
       />
 
       <div className="mb-5 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
         <p className="text-dense font-medium text-amber-700 dark:text-amber-400">
-          Alerts are saved queries, not notifications &mdash; yet.
+          These are saved queries, not notifications &mdash; nothing is emailed to you yet.
         </p>
         <p className="mt-0.5 text-xs leading-relaxed text-amber-700/80 dark:text-amber-400/80">
-          Each alert below re-runs live against the current signal set, so the match count and preview are real. Email
+          Each search below re-runs live against the current signal set, so the match count and preview are real. Email
           delivery is not wired up: it needs a scheduled server job with a mail transport, alongside the existing ingest
-          cron. Alerts are also stored per-browser in localStorage, so they don&rsquo;t follow you between devices.
+          cron. Saved searches are also stored per-browser in localStorage, so they don&rsquo;t follow you between devices.
         </p>
       </div>
 
       {alerts.length === 0 ? (
         <Card>
           <EmptyState
-            title="No saved alerts"
-            description="Run a search, then use Create Alert to save that query here with a live match count."
+            title="No saved searches"
+            description="Run a search, then use Save Search to keep it here with a live match count."
             action={
               <Button variant="primary" onClick={() => navigate("/search")}>
                 Go to Search

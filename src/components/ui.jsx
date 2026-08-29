@@ -434,6 +434,11 @@ export function TabStrip({ tabs, active, onChange, className = "" }) {
 // Sub-navigation for the account detail page — same role as the tab strip
 // but without counts and without the underline rail, matching how the
 // reference product separates "which record" from "which slice of it".
+// `tab.hasData === false` renders a small hollow dot next to the label —
+// a way to tell "this tab is empty for this account, right now" apart
+// from "this tab is empty because nothing has ever been ingested here"
+// without opening it first. Leave `hasData` undefined for a tab where
+// the distinction doesn't apply (it always has something to show).
 export function SubNav({ tabs, active, onChange }) {
   return (
     <div className="-mx-1 overflow-x-auto scrollbar-thin">
@@ -445,13 +450,23 @@ export function SubNav({ tabs, active, onChange }) {
               key={tab.id}
               type="button"
               onClick={() => onChange(tab.id)}
-              className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-dense font-semibold transition-colors ${
+              title={tab.hasData === false ? `${tab.label} — nothing here yet` : undefined}
+              className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-dense font-semibold transition-colors ${
                 isActive
                   ? "bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
                   : "text-body-600 hover:bg-slate-100 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
               }`}
             >
               {tab.label}
+              {tab.hasData === true && (
+                <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-500" aria-hidden="true" />
+              )}
+              {tab.hasData === false && (
+                <span
+                  className="h-1.5 w-1.5 flex-shrink-0 rounded-full border border-slate-300 dark:border-zinc-600"
+                  aria-hidden="true"
+                />
+              )}
             </button>
           )
         })}

@@ -1,5 +1,6 @@
 import { REGULATORY_SIGNAL_TYPES, HIGH_RELEVANCE_THRESHOLD } from "./relevance.js"
 import { matchesAccountCoverage } from "./accountCoverage.js"
+import { companyKey } from "../../shared/companyKey.js"
 
 // One concise line answering "why is this worth acting on, and why here?" —
 // rather than leaving the reader to infer it from a coloured bar. Draws
@@ -12,7 +13,7 @@ import { matchesAccountCoverage } from "./accountCoverage.js"
 // (see lib/colors.js): rose = highest urgency, emerald/amber = a tracked
 // customer/prospect, accent blue = relevance or claimable whitespace,
 // slate = background context.
-export function buildSignalReason(item) {
+export function buildSignalReason(item, companies = []) {
   const rel = item.outreachRelevance ?? 0
   const matched = item.matchedCompanies ?? []
   const extra = matched.length > 1 ? ` +${matched.length - 1}` : ""
@@ -21,6 +22,22 @@ export function buildSignalReason(item) {
   // of this dashboard, so it outranks every other reason.
   if (matched.length > 0) {
     return { label: `Tracked company in the news — ${matched[0]}${extra}`, tone: "prospect" }
+  }
+
+  // matchedCompanies is written once at ingest time and never
+  // re-evaluated, so a company you started tracking after this signal was
+  // ingested still has an empty matchedCompanies array even though it's
+  // on your list now. Fall back to the same entity-name match
+  // accountModel.js's accountNamesFor() already uses for grouping, so
+  // this callout can never say "not yet tracked" about an account you
+  // already have.
+  if (item.scope === "micro" && item.entity) {
+    const trackedMatch = companies.find(
+      (c) => !c.isCompetitor && c.companyKey === companyKey(item.entity),
+    )
+    if (trackedMatch) {
+      return { label: `Tracked company in the news — ${trackedMatch.companyName}`, tone: "prospect" }
+    }
   }
 
   if (REGULATORY_SIGNAL_TYPES.has(item.signalType)) {

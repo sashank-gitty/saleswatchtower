@@ -202,7 +202,7 @@ function TrendStat({ trend }) {
   )
 }
 
-function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, onToggleClaim, sentiment }) {
+function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, onToggleClaim, sentiment, contacts = [] }) {
   const [tab, setTab] = useState("summary")
   const [group, setGroup] = useState("all")
 
@@ -242,6 +242,22 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
     () => (account?.signals ?? []).filter((signal) => groupForSignal(signal) === "regulatory").slice(0, 5),
     [account],
   )
+
+  // Nine tabs looks identical until you click into it. A dot marks
+  // whether there's actually something behind each one for this account
+  // right now, so a blind click isn't the only way to find out — Fast
+  // Facts is left unmarked since Account Information always has a real
+  // answer even at zero signals.
+  const hasSignals = (account?.signalCount ?? account?.signals?.length ?? 0) > 0
+  const tabsWithData = TABS.map((t) => {
+    if (["summary", "signals", "value", "custom", "research"].includes(t.id)) {
+      return { ...t, hasData: hasSignals }
+    }
+    if (t.id === "sentiment") return { ...t, hasData: Boolean(sentiment) }
+    if (t.id === "contacts") return { ...t, hasData: contacts.length > 0 }
+    if (t.id === "tech") return { ...t, hasData: false }
+    return t
+  })
 
   if (loading) {
     return (
@@ -416,7 +432,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
       {account.signals.length > 0 && <AccountChat companyName={account.name} signals={account.signals} />}
 
       <div className="sticky top-14 z-20 -mx-4 mb-5 mt-3 border-b border-slate-200 bg-page/90 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6 dark:border-zinc-800 dark:bg-zinc-950/90">
-        <SubNav tabs={TABS} active={tab} onChange={setTab} />
+        <SubNav tabs={tabsWithData} active={tab} onChange={setTab} />
       </div>
 
       {tab === "facts" && (
@@ -913,7 +929,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
             <Card>
               <EmptyState
                 title="No sentiment research yet"
-                description="This runs from a script on your own Mac (not this website), weekly once you've set it up — see scripts/local/README.md's sentiment-sync section. It combines the last30days and agent-reach skills to read news, Reddit, and social media for a holistic view of what people are saying about this company."
+                description="What people are saying about this company across news, Reddit, and social media isn't connected yet — that needs a one-time setup on my end, so just ask if you want it turned on."
               />
             </Card>
           ) : (
@@ -977,11 +993,43 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
       )}
 
       {tab === "contacts" && (
-        <NotIngested
-          title="Contacts — not available from this pipeline"
-          note="The reference product resolves buying-group contacts and tracks job moves. This pipeline has no people data at all — it ingests company-level news only. Populating this would mean wiring a contact source into ingest, e.g. a ZoomInfo or Lusha connector."
-          sources={["ZoomInfo contact search", "Lusha buying-group search", "LinkedIn Sales Navigator"]}
-        />
+        contacts.length > 0 ? (
+          <Card className="divide-y divide-slate-100 dark:divide-zinc-800">
+            {contacts.map((contact) => (
+              <div key={`${contact.fullName}-${contact.email ?? contact.linkedinUrl}`} className="flex items-start gap-3 p-4">
+                <IconBadge icon={UsersIcon} tone="bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-dense font-bold text-ink-900 dark:text-zinc-50">{contact.fullName}</p>
+                  {contact.title && (
+                    <p className="text-xs text-body-500 dark:text-zinc-400">{contact.title}</p>
+                  )}
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                    {contact.email && (
+                      <span className="text-body-600 dark:text-zinc-300">{contact.email}</span>
+                    )}
+                    {contact.linkedinUrl && (
+                      <a
+                        href={contact.linkedinUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-brand-600 hover:underline dark:text-brand-400"
+                      >
+                        LinkedIn
+                      </a>
+                    )}
+                  </div>
+                </div>
+                <Pill tone="slate">{contact.source === "zoominfo" ? "ZoomInfo" : "Lusha"}</Pill>
+              </div>
+            ))}
+          </Card>
+        ) : (
+          <NotIngested
+            title="Contacts — not available from this pipeline"
+            note="The reference product resolves buying-group contacts and tracks job moves. This pipeline has no people data at all — it ingests company-level news only. Populating this would mean wiring a contact source into ingest, e.g. a ZoomInfo or Lusha connector."
+            sources={["ZoomInfo contact search", "Lusha buying-group search", "LinkedIn Sales Navigator"]}
+          />
+        )
       )}
 
       {tab === "tech" && (

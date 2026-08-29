@@ -47,6 +47,7 @@ function SignalRow({
   onToggleSelect,
   compact = false,
   showCheckbox = true,
+  companies = [],
 }) {
   const [copied, setCopied] = useState(false)
 
@@ -57,7 +58,7 @@ function SignalRow({
   const matchedCompanies = item.matchedCompanies ?? []
   const isUnassigned = matchesAccountCoverage(item, "unassigned")
 
-  const reason = buildSignalReason(item)
+  const reason = buildSignalReason(item, companies)
   const toneStyles = REASON_TONE_STYLES[reason.tone] ?? REASON_TONE_STYLES.neutral
   const accent = accentFor({ isRegulatory, isHighRelevance })
 

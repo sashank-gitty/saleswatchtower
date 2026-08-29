@@ -98,7 +98,7 @@ function Radar({ signals, companies = [], syncStatus, onOpenSignal, loading }) {
     )
   }, [competitors])
 
-  const lastRun = syncStatus?.finishedAt ?? syncStatus?.startedAt ?? syncStatus?.createdAt ?? null
+  const lastRun = syncStatus?.runAt ?? null
   const runAgo = relativeHours(lastRun)
 
   return (
@@ -114,14 +114,18 @@ function Radar({ signals, companies = [], syncStatus, onOpenSignal, loading }) {
       />
 
       <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {[
-          { label: "Signals this week", value: thisWeek.length, tone: "ink" },
-          { label: "Worth acting on", value: highThisWeek.length, tone: "brand" },
-          { label: "Accounts in play", value: accounts.length, tone: "ink" },
-          { label: "Unreviewed", value: unreviewed, tone: "ink" },
-        ].map((tile) => (
-          <StatTile key={tile.label} label={tile.label} value={tile.value} tone={tile.tone} />
-        ))}
+        {loading
+          ? Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-20 animate-pulse rounded-xl bg-slate-100 dark:bg-zinc-800/60" />
+            ))
+          : [
+              { label: "Signals this week", value: thisWeek.length, tone: "ink" },
+              { label: "Worth acting on", value: highThisWeek.length, tone: "brand" },
+              { label: "Accounts in play", value: accounts.length, tone: "ink" },
+              { label: "Unreviewed", value: unreviewed, tone: "ink" },
+            ].map((tile) => (
+              <StatTile key={tile.label} label={tile.label} value={tile.value} tone={tile.tone} />
+            ))}
       </div>
 
       <SectionTitle hint="The pipeline stages behind this dashboard, described as what they actually do.">
@@ -205,7 +209,7 @@ function Radar({ signals, companies = [], syncStatus, onOpenSignal, loading }) {
             return (
               <Card key={account.key} className="p-4 transition-colors hover:border-brand-300 dark:hover:border-brand-500/40">
                 <div className="flex flex-wrap items-start gap-3">
-                  <AccountAvatar name={account.name} />
+                  <AccountAvatar name={account.name} logoUrl={account.logoUrl} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <a

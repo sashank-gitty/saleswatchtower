@@ -21,7 +21,10 @@ function Settings({ theme, onToggleTheme, signals }) {
 
   return (
     <>
-      <PageHeader title="Settings" />
+      <PageHeader
+        title="Settings & Status"
+        subtitle="One real setting below (dark mode) — everything under it is a read-only status board, not something you configure."
+      />
 
       <div className="space-y-5">
         <Card className="p-5">
@@ -32,7 +35,9 @@ function Settings({ theme, onToggleTheme, signals }) {
         </Card>
 
         <Card className="p-5">
-          <SectionTitle>Data pipeline</SectionTitle>
+          <SectionTitle hint="Read-only — what's running behind the dashboard right now, not something you change here.">
+            Data pipeline
+          </SectionTitle>
           <Row
             label="Signal source"
             description="Google News RSS across a watchlist of tracked entities and themes, normalized into the schema by a Claude API call at ingest time, then scored on the outreach-relevance rubric."
@@ -64,8 +69,8 @@ function Settings({ theme, onToggleTheme, signals }) {
             <Pill tone="slate">Not connected</Pill>
           </Row>
           <Row
-            label="Alert delivery"
-            description="Saved alerts re-run live in the browser, but no email is sent. Delivery needs a scheduled server job with a mail transport."
+            label="Saved search delivery"
+            description="Saved searches re-run live in the browser, but no email is sent. Delivery needs a scheduled server job with a mail transport."
           >
             <Pill tone="amber">Partial</Pill>
           </Row>

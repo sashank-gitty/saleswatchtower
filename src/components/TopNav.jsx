@@ -29,7 +29,7 @@ const NAV_ITEMS = [
   // now (src/pages/Accounts.jsx); /my-accounts still resolves (App.jsx),
   // just isn't linked from the nav anymore.
   { page: "accounts", href: "/accounts", label: "Accounts", Icon: BriefcaseIcon },
-  { page: "alerts", href: "/alerts", label: "Alerts", Icon: AlertIcon },
+  { page: "alerts", href: "/alerts", label: "Saved Searches", Icon: AlertIcon },
   { page: "settings", href: "/settings", label: "Settings", Icon: SlidersIcon },
 ]
 
@@ -158,7 +158,7 @@ function TopNav({
 
           <a
             {...linkProps("/alerts")}
-            aria-label={`Alerts${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+            aria-label={`Unreviewed matches from your saved searches${unreadCount > 0 ? ` (${unreadCount})` : ""}`}
             className="relative inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
           >
             <BellIcon className="h-[18px] w-[18px]" />

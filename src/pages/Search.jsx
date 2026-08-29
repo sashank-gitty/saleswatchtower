@@ -61,12 +61,12 @@ function CreateAlertModal({ open, onClose, onCreate, query, days, group }) {
     <Modal
       open={open}
       onClose={onClose}
-      title="Create Search Alert"
+      title="Save This Search"
       footer={
         <>
           <Button onClick={onClose}>Close</Button>
           <Button variant="primary" className="ml-auto" onClick={handleCreate}>
-            Create
+            Save
           </Button>
         </>
       }
@@ -82,12 +82,12 @@ function CreateAlertModal({ open, onClose, onCreate, query, days, group }) {
       </div>
 
       <div className="space-y-4">
-        <Field label="Alert Name">
-          <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder={query || "Untitled alert"} />
+        <Field label="Search Name">
+          <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder={query || "Untitled search"} />
         </Field>
 
         <div>
-          <p className="mb-1.5 text-xs font-medium text-body-500 dark:text-zinc-400">Alert Frequency</p>
+          <p className="mb-1.5 text-xs font-medium text-body-500 dark:text-zinc-400">Digest frequency (for when email delivery ships)</p>
           <div className="space-y-2">
             <Radio name="frequency" value="daily" checked={frequency === "daily"} onChange={setFrequency} label="Daily" />
             <Radio name="frequency" value="weekly" checked={frequency === "weekly"} onChange={setFrequency} label="Weekly" />
@@ -103,8 +103,8 @@ function CreateAlertModal({ open, onClose, onCreate, query, days, group }) {
         {/* Saying this here, at the point of promise, rather than in a
             help page nobody opens. */}
         <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs leading-relaxed text-amber-700 dark:text-amber-400">
-          Saved locally to this browser. The query is stored and re-run live on the Alerts page &mdash; but no email is
-          sent yet: delivery needs a scheduled server job, which doesn&rsquo;t exist in this deployment.
+          Saved locally to this browser. The query is stored and re-run live on the Saved Searches page &mdash; but no
+          email is sent yet: delivery needs a scheduled server job, which doesn&rsquo;t exist in this deployment.
         </p>
       </div>
     </Modal>
@@ -206,7 +206,7 @@ function Search({ signals, companies = [], onOpenSignal }) {
         actions={
           <Button variant="primary" onClick={() => setModalOpen(true)}>
             <AlertIcon className="h-4 w-4" />
-            Create Alert
+            Save Search
           </Button>
         }
       >

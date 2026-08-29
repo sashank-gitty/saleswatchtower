@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { linkProps } from "../lib/router.js"
 import { deriveAccounts } from "../lib/accountModel.js"
 import {
@@ -26,6 +26,7 @@ import {
 import { DownloadIcon, ChevronDownIcon } from "../components/icons.jsx"
 import SkeletonRow from "../components/SkeletonRow.jsx"
 import SignalRow from "../components/SignalRow.jsx"
+import Checkbox from "../components/Checkbox.jsx"
 
 const RANGE_OPTIONS = [
   { value: "1", label: "Last 24 hours" },
@@ -75,7 +76,7 @@ function QuickFilterChip({ active, onClick, children }) {
 // rows. The nesting is what makes this different from a flat feed — it
 // answers "what is happening at each account" rather than "what happened
 // most recently".
-function AccountBlock({ account, signals, onOpenSignal, onToggleReviewed }) {
+function AccountBlock({ account, signals, companies, onOpenSignal, onToggleReviewed, selectedIds, onToggleSelect }) {
   const [expanded, setExpanded] = useState(true)
   const visible = expanded ? signals : signals.slice(0, 3)
 
@@ -122,12 +123,13 @@ function AccountBlock({ account, signals, onOpenSignal, onToggleReviewed }) {
           <SignalRow
             key={signal.id}
             item={signal}
+            companies={companies}
             reviewed={signal.reviewed}
             onToggleReviewed={onToggleReviewed}
             onOpen={onOpenSignal}
-            selected={false}
-            onToggleSelect={() => {}}
-            showCheckbox={false}
+            selected={selectedIds.has(signal.id)}
+            onToggleSelect={onToggleSelect}
+            showCheckbox
             compact
           />
         ))}
@@ -147,7 +149,7 @@ function AccountBlock({ account, signals, onOpenSignal, onToggleReviewed }) {
   )
 }
 
-function GlobalFeed({ signals, companies = [], loading, onOpenSignal, onToggleReviewed }) {
+function GlobalFeed({ signals, companies = [], loading, onOpenSignal, onToggleReviewed, onMarkManyReviewed }) {
   const [search, setSearch] = useState("")
   const [type, setType] = useState(null)
   const [priority, setPriority] = useState(null)
@@ -196,6 +198,16 @@ function GlobalFeed({ signals, companies = [], loading, onOpenSignal, onToggleRe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accounts, priority, type, search, group, unreviewedOnly, highRelevanceOnly, matchedOnly])
 
+  // "What do I own" and "what's out there" are two different questions —
+  // a tracked prospect ranking below an untracked company purely on score
+  // (with nothing on the row itself marking the difference) was the most
+  // confusing thing about this list. Tracked accounts always lead, each
+  // group otherwise keeping the incoming score order.
+  const sortedAccounts = useMemo(
+    () => [...filteredAccounts].sort((a, b) => (b.managed ? 1 : 0) - (a.managed ? 1 : 0)),
+    [filteredAccounts],
+  )
+
   const groupCounts = useMemo(() => countByGroup(scoped), [scoped])
 
   const tabs = useMemo(
@@ -212,7 +224,53 @@ function GlobalFeed({ signals, companies = [], loading, onOpenSignal, onToggleRe
     [groupCounts],
   )
 
-  const pageAccounts = filteredAccounts.slice(page * pageSize, (page + 1) * pageSize)
+  const pageAccounts = sortedAccounts.slice(page * pageSize, (page + 1) * pageSize)
+
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
+
+  const visibleSignalIds = useMemo(
+    () =>
+      pageAccounts.flatMap((account) =>
+        filterByGroup(account.signals, group)
+          .filter((s) => matchesQuickFilters(s, quickFilters))
+          .map((s) => s.id),
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pageAccounts, group, unreviewedOnly, highRelevanceOnly, matchedOnly],
+  )
+
+  // Selection is scoped to what's currently visible on this page/filter —
+  // stale picks from a previous filter or page shouldn't silently linger
+  // in the bulk-action count.
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const visibleSet = new Set(visibleSignalIds)
+      const next = new Set([...prev].filter((id) => visibleSet.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleSignalIds.join(",")])
+
+  const allVisibleSelected = visibleSignalIds.length > 0 && visibleSignalIds.every((id) => selectedIds.has(id))
+  const someVisibleSelected = visibleSignalIds.some((id) => selectedIds.has(id))
+
+  const toggleSelectAll = () => {
+    setSelectedIds(allVisibleSelected ? new Set() : new Set(visibleSignalIds))
+  }
+
+  const toggleSelectOne = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleBulkMarkReviewed = () => {
+    onMarkManyReviewed([...selectedIds])
+    setSelectedIds(new Set())
+  }
 
   const handleExport = () => {
     const header = ["Account", "Status", "Score", "Priority", "Signals", "Last signal"]
@@ -301,9 +359,36 @@ function GlobalFeed({ signals, companies = [], loading, onOpenSignal, onToggleRe
         </Card>
       </PageHeader>
 
-      <SectionTitle hint="Signals grouped by the account they name. No match on your tracked list shows as Not tracked.">
-        Recent Account Signals
-      </SectionTitle>
+      <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+        <SectionTitle hint="Signals grouped by the account they name. No match on your tracked list shows as Not tracked.">
+          Recent Account Signals
+        </SectionTitle>
+        {visibleSignalIds.length > 0 && (
+          <div className="flex items-center gap-2">
+            <div
+              onClick={toggleSelectAll}
+              className="flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+            >
+              <Checkbox
+                checked={allVisibleSelected}
+                indeterminate={!allVisibleSelected && someVisibleSelected}
+                onChange={toggleSelectAll}
+                label="Select all visible signals"
+              />
+              {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
+            </div>
+            {selectedIds.size > 0 && (
+              <button
+                type="button"
+                onClick={handleBulkMarkReviewed}
+                className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
+              >
+                Mark {selectedIds.size} Reviewed
+              </button>
+            )}
+          </div>
+        )}
+      </div>
 
       <Card className="overflow-hidden">
         <div className="px-4 pt-2">
@@ -330,15 +415,37 @@ function GlobalFeed({ signals, companies = [], loading, onOpenSignal, onToggleRe
           />
         ) : (
           <div>
-            {pageAccounts.map((account) => (
-              <AccountBlock
-                key={account.key}
-                account={account}
-                signals={filterByGroup(account.signals, group).filter((s) => matchesQuickFilters(s, quickFilters))}
-                onOpenSignal={onOpenSignal}
-                onToggleReviewed={onToggleReviewed}
-              />
-            ))}
+            {pageAccounts.map((account, i) => {
+              // Tracked accounts always sort first (see sortedAccounts
+              // above); mark the one spot on this page where the list
+              // switches from "yours" to "everything else" so the two
+              // never look like one blended ranking.
+              const isFirstUntracked = !account.managed && (i === 0 || pageAccounts[i - 1].managed)
+              const isFirstTracked = i === 0 && account.managed
+              return (
+                <div key={account.key}>
+                  {isFirstTracked && (
+                    <p className="bg-slate-50 px-4 py-2 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:bg-zinc-900/60 dark:text-zinc-500">
+                      Your Accounts
+                    </p>
+                  )}
+                  {isFirstUntracked && (
+                    <p className="bg-slate-50 px-4 py-2 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:bg-zinc-900/60 dark:text-zinc-500">
+                      Market Discovery — not on your tracked list
+                    </p>
+                  )}
+                  <AccountBlock
+                    account={account}
+                    signals={filterByGroup(account.signals, group).filter((s) => matchesQuickFilters(s, quickFilters))}
+                    companies={companies}
+                    onOpenSignal={onOpenSignal}
+                    onToggleReviewed={onToggleReviewed}
+                    selectedIds={selectedIds}
+                    onToggleSelect={toggleSelectOne}
+                  />
+                </div>
+              )
+            })}
           </div>
         )}
 

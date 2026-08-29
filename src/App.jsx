@@ -20,6 +20,7 @@ import { useAlerts, matchAlert } from "./lib/useAlerts.js"
 import { useCompanies } from "./lib/useCompanies.js"
 import { useSentiment } from "./lib/useSentiment.js"
 import { useMarketData } from "./lib/useMarketData.js"
+import { useContacts } from "./lib/useContacts.js"
 import { Button } from "./components/ui.jsx"
 
 function App() {
@@ -117,6 +118,7 @@ function App() {
   const { companies, isTracked, trackedAt, setCompany } = useCompanies()
   const { sentimentFor } = useSentiment()
   const { marketDataFor } = useMarketData()
+  const { contactsFor } = useContacts()
   const accounts = useMemo(() => deriveAccounts(signals, companies), [signals, companies])
 
   const openItem = useMemo(() => signals.find((s) => s.id === openSignalId) ?? null, [signals, openSignalId])
@@ -198,6 +200,23 @@ function App() {
     })
   }
 
+  // Same optimistic-with-rollback shape as the single-item version, for
+  // clearing a batch of a daily triage pass in one action instead of one
+  // click per signal — /api/reviews already accepts an id array, this was
+  // only ever missing from the UI.
+  const handleMarkManyReviewed = (ids) => {
+    if (!ids.length) return
+    const idSet = new Set(ids)
+    const previous = new Map(signals.filter((s) => idSet.has(s.id)).map((s) => [s.id, s.reviewed]))
+
+    setSignals((prev) => prev.map((s) => (idSet.has(s.id) ? { ...s, reviewed: true } : s)))
+
+    postReview(ids, true).catch((err) => {
+      console.error("Failed to update review state:", err)
+      setSignals((prev) => prev.map((s) => (idSet.has(s.id) ? { ...s, reviewed: previous.get(s.id) } : s)))
+    })
+  }
+
   if (fetchError) {
     return <ErrorState message={fetchError} onRetry={() => setReloadToken((t) => t + 1)} />
   }
@@ -221,9 +240,11 @@ function App() {
         {route.page === "briefing" && (
           <Briefing
             signals={signals}
+            companies={companies}
             loading={loading}
             onOpenSignal={openSignal}
             onToggleReviewed={handleToggleReviewed}
+            onMarkManyReviewed={handleMarkManyReviewed}
           />
         )}
 
@@ -238,6 +259,7 @@ function App() {
             loading={loading}
             onOpenSignal={openSignal}
             onToggleReviewed={handleToggleReviewed}
+            onMarkManyReviewed={handleMarkManyReviewed}
           />
         )}
 
@@ -270,6 +292,7 @@ function App() {
             claimedAt={trackedAt}
             onToggleClaim={setCompany}
             sentiment={sentimentFor(activeAccount?.key)}
+            contacts={contactsFor(activeAccount?.key)}
           />
         )}
 

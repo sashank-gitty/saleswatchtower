@@ -181,7 +181,7 @@ function SignalDetailPanel({
   const counter = { next: 0 }
 
   const tierText = relevanceTierText(item.outreachRelevance ?? null)
-  const reason = buildSignalReason(item)
+  const reason = buildSignalReason(item, companies)
   const reasonTone = REASON_TONE_STYLES[reason.tone] ?? REASON_TONE_STYLES.neutral
   const Icon = iconForSignal(item)
   const groupTone = toneClassesForSignal(item)
@@ -510,7 +510,7 @@ function SignalDetailPanel({
             ) : (
               <NotIngested
                 title="No hiring signals found yet"
-                note="This runs from a script on your own Mac (not this website), checking LinkedIn, Seek, Indeed, and Glassdoor for real team-growth activity — see scripts/local/README.md's hiring-signal-sync section. Either it hasn't run for this account yet, or it ran and genuinely found nothing worth reporting this pass."
+                note="Hiring activity for this company (LinkedIn, Seek, Indeed, Glassdoor) isn't connected yet — that needs a one-time setup on my end, so just ask if you want it turned on. It's also possible it's already connected and genuinely found nothing worth reporting this time."
                 sources={["LinkedIn (via agent-reach)", "Seek", "Indeed", "Glassdoor"]}
               />
             )}

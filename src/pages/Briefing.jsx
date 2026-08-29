@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { navigate } from "../lib/router.js"
 import { computeBriefing } from "../lib/briefing.js"
+import { buildSignalReason } from "../lib/signalReason.js"
 import {
   PageHeader,
   Card,
@@ -13,6 +14,7 @@ import {
   StatTile,
 } from "../components/ui.jsx"
 import SignalRow from "../components/SignalRow.jsx"
+import Checkbox from "../components/Checkbox.jsx"
 
 // Same staleness bar SyncStatus.jsx uses in the top nav, kept local here
 // (that component doesn't export it) rather than pulled into a shared
@@ -151,9 +153,56 @@ function TypeBreakdown({ typeCounts }) {
   )
 }
 
-function Briefing({ signals, loading, onOpenSignal, onToggleReviewed }) {
+function Briefing({ signals, companies = [], loading, onOpenSignal, onToggleReviewed, onMarkManyReviewed }) {
   const ingestStatus = useIngestStatus()
   const briefing = computeBriefing(signals)
+  // Tracked-account signals first, same "what's mine" vs "what's out
+  // there" split as Global Feed — a real prospect's own news shouldn't
+  // sit below a company you've never heard of just because it's newer.
+  const visibleSignals = useMemo(
+    () =>
+      [...briefing.newSinceYesterday]
+        .sort((a, b) => {
+          const aTracked = buildSignalReason(a, companies).tone === "prospect" ? 1 : 0
+          const bTracked = buildSignalReason(b, companies).tone === "prospect" ? 1 : 0
+          return bTracked - aTracked
+        })
+        .slice(0, 10),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [briefing.newSinceYesterday, companies],
+  )
+
+  const [selectedIds, setSelectedIds] = useState(() => new Set())
+
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const visibleIds = new Set(visibleSignals.map((s) => s.id))
+      const next = new Set([...prev].filter((id) => visibleIds.has(id)))
+      return next.size === prev.size ? prev : next
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleSignals.map((s) => s.id).join(",")])
+
+  const allVisibleSelected = visibleSignals.length > 0 && visibleSignals.every((s) => selectedIds.has(s.id))
+  const someVisibleSelected = visibleSignals.some((s) => selectedIds.has(s.id))
+
+  const toggleSelectAll = () => {
+    setSelectedIds(allVisibleSelected ? new Set() : new Set(visibleSignals.map((s) => s.id)))
+  }
+
+  const toggleSelectOne = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const handleBulkMarkReviewed = () => {
+    onMarkManyReviewed([...selectedIds])
+    setSelectedIds(new Set())
+  }
 
   const today = new Date().toLocaleDateString(undefined, {
     weekday: "long",
@@ -221,9 +270,36 @@ function Briefing({ signals, loading, onOpenSignal, onToggleReviewed }) {
             />
           </div>
 
-          <SectionTitle hint="Every signal ingested in the last 24 hours, newest first.">
-            New Since Yesterday
-          </SectionTitle>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <SectionTitle hint="Every signal ingested in the last 24 hours, newest first.">
+              New Since Yesterday
+            </SectionTitle>
+            {visibleSignals.length > 0 && (
+              <div className="flex items-center gap-2">
+                <div
+                  onClick={toggleSelectAll}
+                  className="flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                >
+                  <Checkbox
+                    checked={allVisibleSelected}
+                    indeterminate={!allVisibleSelected && someVisibleSelected}
+                    onChange={toggleSelectAll}
+                    label="Select all visible signals"
+                  />
+                  {selectedIds.size > 0 ? `${selectedIds.size} selected` : "Select all"}
+                </div>
+                {selectedIds.size > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleBulkMarkReviewed}
+                    className="rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-600 transition-colors hover:bg-emerald-500/20 dark:text-emerald-400"
+                  >
+                    Mark {selectedIds.size} Reviewed
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
           {briefing.newSinceYesterday.length === 0 ? (
             <Card className="mb-8">
               <EmptyState
@@ -238,19 +314,38 @@ function Briefing({ signals, loading, onOpenSignal, onToggleReviewed }) {
             </Card>
           ) : (
             <div className="mb-8 space-y-2">
-              {briefing.newSinceYesterday.slice(0, 10).map((signal) => (
-                <SignalRow
-                  key={signal.id}
-                  item={signal}
-                  reviewed={signal.reviewed}
-                  onToggleReviewed={onToggleReviewed}
-                  onOpen={onOpenSignal}
-                  selected={false}
-                  onToggleSelect={() => {}}
-                  showCheckbox={false}
-                  compact
-                />
-              ))}
+              {visibleSignals.map((signal, i) => {
+                const isTracked = buildSignalReason(signal, companies).tone === "prospect"
+                const prevTracked =
+                  i > 0 ? buildSignalReason(visibleSignals[i - 1], companies).tone === "prospect" : null
+                const isFirstTracked = i === 0 && isTracked
+                const isFirstUntracked = !isTracked && (i === 0 || prevTracked)
+                return (
+                  <div key={signal.id}>
+                    {isFirstTracked && (
+                      <p className="px-1 pb-1 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                        Your Accounts
+                      </p>
+                    )}
+                    {isFirstUntracked && (
+                      <p className="px-1 pb-1 pt-2 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                        Market Discovery — not on your tracked list
+                      </p>
+                    )}
+                    <SignalRow
+                      item={signal}
+                      companies={companies}
+                      reviewed={signal.reviewed}
+                      onToggleReviewed={onToggleReviewed}
+                      onOpen={onOpenSignal}
+                      selected={selectedIds.has(signal.id)}
+                      onToggleSelect={toggleSelectOne}
+                      showCheckbox
+                      compact
+                    />
+                  </div>
+                )
+              })}
             </div>
           )}
 
