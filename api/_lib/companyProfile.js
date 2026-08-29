@@ -35,15 +35,27 @@ export async function researchCompanyProfile(companyName) {
     throw new BudgetExceededError(spend)
   }
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-5",
-    max_tokens: 1024,
-    system: SYSTEM_PROMPT,
-    // Bounds real search cost/time per company — one company shouldn't
-    // spiral into an open-ended research session.
-    tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }],
-    messages: [{ role: "user", content: `Company name: ${companyName}` }],
-  })
+  // A 45s request timeout, well under Vercel's 60s hard maxDuration for
+  // this route (vercel.json — the Hobby-plan ceiling, not raisable).
+  // Confirmed necessary the hard way: a large/ambiguous company name
+  // (Chevron — a real request, not a guess) drove enough searching that
+  // the whole function got killed by Vercel's own timeout before this
+  // ever got a chance to fail gracefully into the caller's try/catch. A
+  // request-level timeout throws an ordinary error the caller already
+  // handles, so the company still gets tracked with just no snapshot,
+  // rather than losing the whole request including the response.
+  const response = await anthropic.messages.create(
+    {
+      model: "claude-sonnet-5",
+      max_tokens: 1024,
+      system: SYSTEM_PROMPT,
+      // Bounds real search cost/time per company — one company shouldn't
+      // spiral into an open-ended research session.
+      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }],
+      messages: [{ role: "user", content: `Company name: ${companyName}` }],
+    },
+    { timeout: 45_000 },
+  )
 
   // Billed whether or not the completion turns out to be parseable, same
   // reasoning as normalize.js. Doesn't capture the web-search tool's own
