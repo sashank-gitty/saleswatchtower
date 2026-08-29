@@ -19,6 +19,7 @@ export const SIGNAL_TYPES = [
   "restructure",
   "regulation",
   "pain point",
+  "hiring surge",
 ]
 
 export const SCOPES = ["macro", "micro"]

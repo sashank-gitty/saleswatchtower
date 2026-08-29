@@ -4,6 +4,7 @@ import { fetchWatchlist } from "./_lib/fetchNews.js"
 import { normalizeItem, BudgetExceededError } from "./_lib/normalize.js"
 import { buildCompanyMatcher } from "./_lib/matchCompanies.js"
 import { watchlistForRun } from "./_lib/watchlist.js"
+import { fetchAsxFilings } from "./_lib/fetchAsxFilings.js"
 
 // Hard cap on LLM normalization calls per run — bounds both cost and
 // Vercel function execution time regardless of how many raw RSS items
@@ -22,8 +23,8 @@ function toDateString(date) {
   return date.toISOString().slice(0, 10)
 }
 
-function idFor(dedupeKey) {
-  return `news-${createHash("sha1").update(dedupeKey).digest("hex").slice(0, 16)}`
+function idFor(dedupeKey, prefix = "news") {
+  return `${prefix}-${createHash("sha1").update(dedupeKey).digest("hex").slice(0, 16)}`
 }
 
 export default async function handler(req, res) {
@@ -58,11 +59,18 @@ export default async function handler(req, res) {
     // hit mid-run — the remaining candidates were left un-normalized on
     // purpose, not dropped by a bug.
     budgetExceeded: false,
+    // Real ASX filings (api/_lib/fetchAsxFilings.js) — separate from the
+    // news counts above since these skip normalizeItem() entirely (no LLM
+    // call needed, see that file for why) and only run for companies with
+    // an asx_ticker set.
+    asxQueried: 0,
+    asxInserted: 0,
+    asxErrors: [],
   }
 
   try {
     const trackedCompanies = await sql`
-      SELECT company_key, company_name, is_competitor FROM tracked_companies
+      SELECT company_key, company_name, is_competitor, asx_ticker FROM tracked_companies
     `
     const matcher = buildCompanyMatcher(
       trackedCompanies.map((row) => ({
@@ -146,6 +154,53 @@ export default async function handler(req, res) {
     }
 
     await Promise.all(Array.from({ length: NORMALIZE_CONCURRENCY }, worker))
+
+    // ASX filings: no Claude normalization step, see fetchAsxFilings.js —
+    // each item already names exactly one known company and a known
+    // report type, so the summary is built directly from real fields
+    // rather than judged by the LLM.
+    const companiesWithTickers = trackedCompanies
+      .filter((row) => row.asx_ticker)
+      .map((row) => ({ companyKey: row.company_key, companyName: row.company_name, asxTicker: row.asx_ticker }))
+    summary.asxQueried = companiesWithTickers.length
+
+    const { items: asxItems, errors: asxFetchErrors } = await fetchAsxFilings(companiesWithTickers)
+    summary.asxErrors = asxFetchErrors
+
+    for (const filing of asxItems) {
+      if (existingKeys.has(filing.dedupeKey)) continue
+      if (seenInBatch.has(filing.dedupeKey)) continue
+      seenInBatch.add(filing.dedupeKey)
+
+      try {
+        await sql`
+          INSERT INTO signals (id, headline, summary, source_url, date, scope, entity, signal_type, origin, dedupe_key, outreach_relevance, matched_companies)
+          VALUES (
+            ${idFor(filing.dedupeKey, "filing")},
+            ${filing.headline},
+            ${`${filing.companyName} lodged "${filing.headline}" with the ASX on ${toDateString(filing.pubDate)}.`},
+            ${filing.sourceUrl},
+            ${toDateString(filing.pubDate)},
+            'micro',
+            ${filing.companyName},
+            'earnings',
+            'filing',
+            ${filing.dedupeKey},
+            -- Fixed relevance rather than an LLM judgment call: a real
+            -- earnings/annual report filing is consistently a strong
+            -- outreach trigger, not something worth a per-item Claude
+            -- call to score.
+            4,
+            ${[filing.companyName]}
+          )
+          ON CONFLICT (dedupe_key) DO NOTHING
+        `
+        summary.asxInserted += 1
+      } catch (err) {
+        console.error("ingest: failed on ASX filing", filing.dedupeKey, err)
+        summary.asxErrors.push({ ticker: filing.companyKey, message: err.message })
+      }
+    }
 
     await logRun("success", summary)
     res.status(200).json(summary)

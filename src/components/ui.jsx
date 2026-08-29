@@ -659,11 +659,12 @@ export function Modal({ open, onClose, title, children, footer }) {
   )
 }
 
-export function Field({ label, children }) {
+export function Field({ label, hint, children }) {
   return (
     <label className="block">
       <span className="mb-1.5 block text-[12px] font-medium text-body-500 dark:text-zinc-400">{label}</span>
       {children}
+      {hint && <span className="mt-1 block text-[11.5px] leading-relaxed text-body-500 dark:text-zinc-500">{hint}</span>}
     </label>
   )
 }

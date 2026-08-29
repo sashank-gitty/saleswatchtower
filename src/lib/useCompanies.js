@@ -39,13 +39,14 @@ export function useCompanies() {
   const isCompetitor = (key) => companies.find((c) => c.companyKey === key)?.isCompetitor ?? false
 
   // `options` carries the fields beyond the boolean: status
-  // (customer/prospect/null), isCompetitor, and note (why you're tracking
-  // it — what makes the pin icon on an existing row double as the "+ Add
-  // Company" flow: same call, just with a note and possibly no live
-  // signals yet).
+  // (customer/prospect/null), isCompetitor, note (why you're tracking it),
+  // and asxTicker (ASX code, only used by the ASX-filings ingest source —
+  // see api/_lib/fetchAsxFilings.js) — what makes the pin icon on an
+  // existing row double as the "+ Add Company" flow: same call, just with
+  // a note and possibly no live signals yet.
   const setCompany = (companyKey, companyName, tracked, options = {}) => {
-    const { status = null, isCompetitor: competitor = false, note = null } = options
-    const optimisticRow = { companyKey, companyName, status, isCompetitor: competitor, note, createdAt: new Date().toISOString() }
+    const { status = null, isCompetitor: competitor = false, note = null, asxTicker = null } = options
+    const optimisticRow = { companyKey, companyName, status, isCompetitor: competitor, note, asxTicker, createdAt: new Date().toISOString() }
 
     setCompanies((prev) =>
       tracked ? [optimisticRow, ...prev.filter((c) => c.companyKey !== companyKey)] : prev.filter((c) => c.companyKey !== companyKey),
@@ -55,7 +56,7 @@ export function useCompanies() {
       ? fetch("/api/companies", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ companyKey, companyName, status, isCompetitor: competitor, note }),
+          body: JSON.stringify({ companyKey, companyName, status, isCompetitor: competitor, note, asxTicker }),
         })
       : fetch("/api/companies", {
           method: "DELETE",

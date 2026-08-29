@@ -36,12 +36,14 @@ function AddCompanyModal({ open, onClose, onAdd }) {
   const [note, setNote] = useState("")
   const [status, setStatus] = useState(null)
   const [isCompetitor, setIsCompetitor] = useState(false)
+  const [asxTicker, setAsxTicker] = useState("")
 
   const handleClose = () => {
     setName("")
     setNote("")
     setStatus(null)
     setIsCompetitor(false)
+    setAsxTicker("")
     onClose()
   }
 
@@ -49,7 +51,7 @@ function AddCompanyModal({ open, onClose, onAdd }) {
     e.preventDefault()
     const trimmedName = name.trim()
     if (!trimmedName) return
-    onAdd(accountKey(trimmedName), trimmedName, { status, isCompetitor, note: note.trim() || null })
+    onAdd(accountKey(trimmedName), trimmedName, { status, isCompetitor, note: note.trim() || null, asxTicker: asxTicker.trim() || null })
     handleClose()
   }
 
@@ -77,6 +79,13 @@ function AddCompanyModal({ open, onClose, onAdd }) {
           onChange={setIsCompetitor}
           label="This is a competitor, not a prospect (track for positioning, not outreach)"
         />
+        <Field label="ASX ticker (optional)" hint="Only if this company is listed on the Australian Securities Exchange — lets us pull its real earnings and annual report filings, not just news about them. Leave blank otherwise.">
+          <TextInput
+            value={asxTicker}
+            onChange={(e) => setAsxTicker(e.target.value)}
+            placeholder="e.g. CBA"
+          />
+        </Field>
         <Field label="Why you're tracking this (optional)">
           <Textarea
             value={note}

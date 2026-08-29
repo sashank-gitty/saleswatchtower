@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const rows = await sql`
-        SELECT company_key, company_name, status, is_competitor, note, created_at
+        SELECT company_key, company_name, status, is_competitor, note, asx_ticker, created_at
         FROM tracked_companies
         ORDER BY created_at DESC
       `
@@ -19,6 +19,7 @@ export default async function handler(req, res) {
           status: row.status,
           isCompetitor: row.is_competitor,
           note: row.note,
+          asxTicker: row.asx_ticker,
           createdAt: row.created_at,
         })),
       )
@@ -30,7 +31,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const { companyKey, companyName, status, isCompetitor, note } = req.body ?? {}
+    const { companyKey, companyName, status, isCompetitor, note, asxTicker } = req.body ?? {}
 
     if (typeof companyKey !== "string" || !companyKey) {
       res.status(400).json({ error: "companyKey must be a non-empty string" })
@@ -44,19 +45,32 @@ export default async function handler(req, res) {
       res.status(400).json({ error: "status must be 'customer', 'prospect', or null" })
       return
     }
+    // Only used for the ASX-filings ingest source (api/_lib/fetchAsxFilings.js)
+    // — not validated against a real ASX code list, just normalized to how
+    // ASX tickers are actually written, so a stray lowercase/space typo
+    // doesn't silently fail to match.
+    const normalizedTicker = typeof asxTicker === "string" ? asxTicker.trim().toUpperCase() || null : null
 
     try {
       await sql`
-        INSERT INTO tracked_companies (company_key, company_name, status, is_competitor, note)
-        VALUES (${companyKey}, ${companyName}, ${status ?? null}, ${Boolean(isCompetitor)}, ${note ?? null})
+        INSERT INTO tracked_companies (company_key, company_name, status, is_competitor, note, asx_ticker)
+        VALUES (${companyKey}, ${companyName}, ${status ?? null}, ${Boolean(isCompetitor)}, ${note ?? null}, ${normalizedTicker})
         ON CONFLICT (company_key)
         DO UPDATE SET
           company_name = EXCLUDED.company_name,
           status = EXCLUDED.status,
           is_competitor = EXCLUDED.is_competitor,
-          note = EXCLUDED.note
+          note = EXCLUDED.note,
+          asx_ticker = EXCLUDED.asx_ticker
       `
-      res.status(200).json({ companyKey, companyName, status: status ?? null, isCompetitor: Boolean(isCompetitor), note: note ?? null })
+      res.status(200).json({
+        companyKey,
+        companyName,
+        status: status ?? null,
+        isCompetitor: Boolean(isCompetitor),
+        note: note ?? null,
+        asxTicker: normalizedTicker,
+      })
     } catch (err) {
       console.error("POST /api/companies failed:", err)
       res.status(500).json({ error: "Failed to save tracked company" })
