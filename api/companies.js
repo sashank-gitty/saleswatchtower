@@ -80,14 +80,6 @@ export default async function handler(req, res) {
           note = EXCLUDED.note,
           asx_ticker = EXCLUDED.asx_ticker
       `
-      res.status(200).json({
-        companyKey,
-        companyName,
-        status: status ?? null,
-        isCompetitor: Boolean(isCompetitor),
-        note: note ?? null,
-        asxTicker: normalizedTicker,
-      })
     } catch (err) {
       console.error("POST /api/companies failed:", err)
       res.status(500).json({ error: "Failed to save tracked company" })
@@ -96,14 +88,22 @@ export default async function handler(req, res) {
 
     // Best-effort company-snapshot enrichment — only for a company that
     // doesn't already have one (an edit to an existing tracked company's
-    // note/status shouldn't re-spend on research it already has). Runs
-    // after the response above logically completes but this is a plain
-    // async function, not a background task: the response has already
-    // been sent by res.status().json(), and Vercel keeps a serverless
-    // function alive until the handler's promise resolves, so this still
-    // finishes properly rather than getting frozen mid-flight. Wrapped so
-    // a slow or failed enrichment (including hitting the monthly budget)
-    // never turns tracking a company into an error the user sees.
+    // note/status shouldn't re-spend on research it already has).
+    //
+    // Deliberately awaited BEFORE the response is sent, not after —
+    // learned the hard way that "after" doesn't work here. A serverless
+    // function on Vercel does not keep running once its response has
+    // gone out; code placed after res.json() with no further await on
+    // it landing anywhere durable can end up not running at all. So
+    // tracking a company now genuinely waits on this (up to ~60s.
+    // vercel.json's maxDuration for this route). The frontend already
+    // updates optimistically and doesn't wait on this request resolving
+    // (see useCompanies.js), so the extra time is invisible in the UI —
+    // it's only this HTTP request itself that runs long, not anything
+    // the user is staring at.
+    //
+    // Wrapped so a slow or failed enrichment (including hitting the
+    // monthly budget) never fails the tracking action itself.
     try {
       const existing = await sql`SELECT 1 FROM company_profiles WHERE company_key = ${companyKey}`
       if (existing.length === 0) {
@@ -131,6 +131,15 @@ export default async function handler(req, res) {
         console.error("companyProfile: enrichment failed for", companyName, err)
       }
     }
+
+    res.status(200).json({
+      companyKey,
+      companyName,
+      status: status ?? null,
+      isCompetitor: Boolean(isCompetitor),
+      note: note ?? null,
+      asxTicker: normalizedTicker,
+    })
     return
   }
 
