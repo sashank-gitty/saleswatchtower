@@ -2,7 +2,7 @@ import { useMemo, useState } from "react"
 import { linkProps } from "../lib/router.js"
 import { SIGNAL_GROUPS, countByGroup, filterByGroup, iconForSignal } from "../lib/signalGroups.js"
 import { pillClassForSignalType } from "../lib/colors.js"
-import { accountKey } from "../lib/accountModel.js"
+import { accountKey, deriveAccounts } from "../lib/accountModel.js"
 import { useAlerts } from "../lib/useAlerts.js"
 import { matchesQuery } from "../lib/textMatch.js"
 import {
@@ -20,6 +20,9 @@ import {
   Toggle,
   Highlight,
   AccountAvatar,
+  ScoreBadge,
+  PriorityPill,
+  SectionTitle,
 } from "../components/ui.jsx"
 import { AlertIcon } from "../components/icons.jsx"
 
@@ -117,6 +120,24 @@ function Search({ signals, companies = [], onOpenSignal }) {
 
   const { createAlert } = useAlerts()
 
+  // Accounts, not just signals — a real gap this used to have: searching
+  // a company with no news yet (or just not enough to have written a
+  // matching headline) returned nothing at all, even though the account
+  // itself genuinely exists. deriveAccounts() now seeds one for every
+  // tracked company regardless of signal count (see accountModel.js), so
+  // this is a real, complete list to match names against, not a
+  // best-effort subset.
+  const accounts = useMemo(() => deriveAccounts(signals, companies), [signals, companies])
+  const matchedAccounts = useMemo(() => {
+    const needle = query.trim()
+    if (!needle) return []
+    return accounts
+      .filter((a) => matchesQuery(a.name, needle))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+  }, [accounts, query])
+
+  const logoByCompanyKey = useMemo(() => new Map(companies.map((c) => [c.companyKey, c.logoUrl])), [companies])
   const statusByCompanyKey = useMemo(() => new Map(companies.map((c) => [c.companyKey, c.status])), [companies])
   const statusFor = (signal) => {
     for (const name of signal.matchedCompanies ?? []) {
@@ -211,6 +232,35 @@ function Search({ signals, companies = [], onOpenSignal }) {
         </div>
       </PageHeader>
 
+      {matchedAccounts.length > 0 && (
+        <div className="mb-5">
+          <SectionTitle hint="Companies matching the name, whether or not they have any signals yet.">
+            Accounts
+          </SectionTitle>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {matchedAccounts.map((account) => (
+              <a
+                key={account.key}
+                {...linkProps(`/accounts/${encodeURIComponent(account.key)}`)}
+                className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition-colors hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900/60 dark:hover:border-brand-500/40"
+              >
+                <AccountAvatar name={account.name} logoUrl={account.logoUrl} size="md" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-dense font-semibold text-ink-900 dark:text-zinc-100">{account.name}</p>
+                  <p className="text-2xs text-body-500 dark:text-zinc-400">
+                    {account.signalCount} {account.signalCount === 1 ? "signal" : "signals"}
+                  </p>
+                </div>
+                <div className="flex flex-shrink-0 items-center gap-1.5">
+                  <PriorityPill priority={account.priority} />
+                  <ScoreBadge score={account.score} size="sm" />
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Card className="overflow-hidden">
         <div className="px-4 pt-2">
           <TabStrip tabs={tabs} active={group} onChange={setGroup} />
@@ -229,7 +279,7 @@ function Search({ signals, companies = [], onOpenSignal }) {
               return (
                 <li key={signal.id} className="transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800/40">
                   <div className="flex items-start gap-3 px-4 py-3">
-                    <AccountAvatar name={account} size="sm" />
+                    <AccountAvatar name={account} logoUrl={logoByCompanyKey.get(accountKey(account))} size="sm" />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <a

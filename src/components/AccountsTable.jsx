@@ -199,7 +199,7 @@ function AccountsTable({
                       {...linkProps(`/accounts/${encodeURIComponent(account.key)}`)}
                       className="flex items-center gap-2.5"
                     >
-                      <AccountAvatar name={account.name} size="sm" />
+                      <AccountAvatar name={account.name} logoUrl={account.logoUrl} size="sm" />
                       <span className="truncate font-semibold text-ink-900 hover:text-brand-600 dark:text-zinc-100 dark:hover:text-brand-400">
                         {account.name}
                       </span>

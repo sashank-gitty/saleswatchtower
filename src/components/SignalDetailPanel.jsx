@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { pillClassForScope } from "../lib/colors.js"
+import { linkProps } from "../lib/router.js"
 import { relevanceTierText } from "../lib/relevanceTiers.js"
 import { buildSignalReason, actionForReason, REASON_TONE_STYLES } from "../lib/signalReason.js"
 import { accountImpact, whoThisAffects, outreachAngles, scoreMeaning } from "../lib/signalInsights.js"
@@ -192,6 +193,7 @@ function SignalDetailPanel({
   // here rather than baked into signalInsights.js so that module can stay
   // entirely about accounts, and this one entirely about vendors.
   const isCompetitor = Boolean(trackedCompany?.isCompetitor)
+  const accountLinkProps = linkProps(`/accounts/${encodeURIComponent(accountKey(account))}`)
 
   const fullText = `${item.headline}\n\n${item.summary}\n\n${item.sourceUrl}`
 
@@ -216,17 +218,33 @@ function SignalDetailPanel({
             one. It still does the job the image did: mark where the
             drawer begins and say whose signal this is. */}
         <div className="bg-gradient-brand relative flex flex-shrink-0 items-center gap-3 px-4 py-3.5">
-          <AccountAvatar name={account} size="sm" />
+          <AccountAvatar name={account} logoUrl={trackedCompany?.logoUrl} size="sm" />
           <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-1.5 truncate text-dense font-bold text-white">
-              {account}
-              {isCompetitor && (
+            {/* Competitors are deliberately not linked here — they have
+                no entry in deriveAccounts()'s output (Competitors.jsx is
+                their page instead), so a link to /accounts/{key} would
+                only ever land on "Account not found." */}
+            {isCompetitor ? (
+              <p className="flex items-center gap-1.5 truncate text-dense font-bold text-white">
+                {account}
                 <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-3xs font-semibold uppercase tracking-wide text-white">
                   <TargetIcon className="h-2.5 w-2.5" />
                   Competitor
                 </span>
-              )}
-            </p>
+              </p>
+            ) : (
+              <a
+                {...accountLinkProps}
+                onClick={(e) => {
+                  accountLinkProps.onClick(e)
+                  if (!e.defaultPrevented) return
+                  onClose()
+                }}
+                className="block truncate text-dense font-bold text-white hover:underline"
+              >
+                {account}
+              </a>
+            )}
             <time className="text-xs tabular-nums text-white/70">{formatDate(item.date)}</time>
           </div>
           <button

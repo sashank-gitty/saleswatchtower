@@ -249,6 +249,25 @@ export function deriveAccounts(signals, companies = [], now = Date.now()) {
 
   const byKey = new Map()
 
+  // Seed an account for every tracked company FIRST, before scanning any
+  // signal — a company you've just tracked has no signals yet, and the
+  // signal-scanning loop below only ever creates an entry when it finds
+  // one. Without this, a freshly-tracked (or simply quiet) company never
+  // gets an account entry at all, which means its detail page is
+  // unreachable from anywhere in the app: not the Accounts table, not
+  // Search, not the command palette, nothing — there's no key to look
+  // it up by. Confirmed as a real, live bug (not hypothetical) before
+  // writing this: 4 of 5 tracked companies in production had zero
+  // matched signals and were completely unreachable. Competitors are
+  // excluded here for the same reason accountNamesFor already excludes
+  // them below — they get Competitors.jsx, not this page.
+  for (const company of companies) {
+    if (company.isCompetitor) continue
+    if (!byKey.has(company.companyKey)) {
+      byKey.set(company.companyKey, { key: company.companyKey, name: company.companyName, signals: [], tracked: true })
+    }
+  }
+
   for (const signal of signals) {
     for (const name of accountNamesFor(signal, competitorKeys)) {
       const key = accountKey(name)

@@ -82,7 +82,7 @@ function AccountBlock({ account, signals, onOpenSignal, onToggleReviewed }) {
   return (
     <div className="border-b border-slate-200 last:border-b-0 dark:border-zinc-800">
       <div className="flex items-start gap-3 bg-section px-4 py-3 dark:bg-zinc-900/40">
-        <AccountAvatar name={account.name} size="sm" />
+        <AccountAvatar name={account.name} logoUrl={account.logoUrl} size="sm" />
         <div className="min-w-0 flex-1">
           {/* Identity on its own line, status pill on the line beneath it
               — kept apart rather than run together so the account name is

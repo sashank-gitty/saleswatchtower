@@ -314,7 +314,16 @@ export function PriorityPill({ priority }) {
 // would mean hotlinking third-party assets, so this derives a stable
 // monogram + hue from the name instead. Same input always yields the same
 // swatch, which is what makes a table scannable.
-export function AccountAvatar({ name, size = "md" }) {
+// Real logo when one's on file (api/_lib/companyProfile.js), initials
+// otherwise. A failed image load (a domain the logo host can't resolve,
+// a transient network blip) falls back to the initials rather than a
+// broken-image icon — same technique AccountDetail.jsx's banner already
+// used for its own, larger logo tile, generalized here so every place an
+// account shows up (table, feed, search, the signal drawer) gets the
+// same real-logo treatment instead of just the one page.
+export function AccountAvatar({ name, logoUrl = null, size = "md" }) {
+  const [imgFailed, setImgFailed] = useState(false)
+
   const hues = [
     "bg-brand-500",
     "bg-sky-500",
@@ -346,6 +355,22 @@ export function AccountAvatar({ name, size = "md" }) {
     lg: "h-12 w-12 rounded-xl text-base",
     xl: "h-16 w-16 rounded-2xl text-2xl",
   }
+
+  if (logoUrl && !imgFailed) {
+    return (
+      <span
+        className={`inline-flex flex-shrink-0 items-center justify-center border border-slate-200 bg-white p-1 dark:border-zinc-700 ${sizes[size]}`}
+      >
+        <img
+          src={logoUrl}
+          alt=""
+          className="h-full w-full object-contain"
+          onError={() => setImgFailed(true)}
+        />
+      </span>
+    )
+  }
+
   return (
     <span
       aria-hidden="true"

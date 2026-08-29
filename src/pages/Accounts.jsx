@@ -7,29 +7,20 @@ import {
   Button,
   FilterSelect,
   SearchInput,
-  Card,
   Modal,
   Field,
   TextInput,
   Textarea,
   Radio,
   Toggle,
-  SectionTitle,
 } from "../components/ui.jsx"
-import { DownloadIcon, PlusIcon, TrashIcon } from "../components/icons.jsx"
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-
-function formatDate(dateString) {
-  if (!dateString) return "—"
-  const [year, month, day] = String(dateString).slice(0, 10).split("-").map(Number)
-  return `${String(day).padStart(2, "0")} ${MONTHS[month - 1]} ${year}`
-}
+import { DownloadIcon, PlusIcon } from "../components/icons.jsx"
 
 // The whole point of this dashboard: type a company name in here and it
-// starts getting watched. No signal has to exist yet — the next
-// news-check run picks it up automatically. Until then it shows in the
-// "Added Manually" list below the table (see orphanedClaims).
+// starts getting watched. No signal has to exist yet — deriveAccounts()
+// (accountModel.js) seeds a real account entry for every tracked
+// company up front, so it shows up in the table below immediately, not
+// once a signal eventually arrives.
 function AddCompanyModal({ open, onClose, onAdd }) {
   const [name, setName] = useState("")
   const [note, setNote] = useState("")
@@ -128,9 +119,9 @@ function AddCompanyModal({ open, onClose, onAdd }) {
 // nav items — "Accounts" and "My Accounts" — were the single most
 // confusing thing about this app on a first visit). "Tracked" in the
 // Type filter below is the same filter My Accounts used to be a whole
-// separate page for; Track-a-Company and the orphaned-claims list moved
-// here too, so there's exactly one place to manage accounts instead of
-// two that looked like they might mean different things.
+// separate page for; Track-a-Company moved here too, so there's exactly
+// one place to manage accounts instead of two that looked like they
+// might mean different things.
 function Accounts({ signals, companies = [], loading, isClaimed, onToggleClaim, initialType = null }) {
   const [search, setSearch] = useState("")
   const [type, setType] = useState(initialType)
@@ -156,15 +147,6 @@ function Accounts({ signals, companies = [], loading, isClaimed, onToggleClaim, 
       return true
     })
   }, [accounts, priority, minScore, type, search, starred, isClaimed])
-
-  // Tracked companies that don't resolve to a live account yet (its
-  // signals aged out, or none have arrived since it was added) — only
-  // relevant when you're specifically looking at your tracked list, so
-  // scoped to the "Tracked" filter rather than shown all the time.
-  const orphanedClaims = useMemo(
-    () => (type === "mine" ? companies.filter((c) => !accounts.some((a) => a.key === c.companyKey)) : []),
-    [type, companies, accounts],
-  )
 
   const toggleStar = (key) => {
     setStarred((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]))
@@ -274,37 +256,6 @@ function Accounts({ signals, companies = [], loading, isClaimed, onToggleClaim, 
               : undefined
         }
       />
-
-      {orphanedClaims.length > 0 && (
-        <>
-          <SectionTitle hint="Companies you've added by name with nothing in the news yet. They'll move into the table above automatically the moment a signal about them shows up.">
-            Added Manually — Watching for News
-          </SectionTitle>
-          <div className="space-y-2">
-            {orphanedClaims.map((c) => (
-              <Card key={c.companyKey} className="flex flex-wrap items-start gap-3 p-4">
-                <div className="min-w-0 flex-1">
-                  <p className="text-dense font-bold text-ink-900 dark:text-zinc-50">{c.companyName}</p>
-                  {c.note ? (
-                    <p className="mt-1 text-xs leading-relaxed text-body-500 dark:text-zinc-300">{c.note}</p>
-                  ) : (
-                    <p className="mt-1 text-xs italic text-body-500 dark:text-zinc-500">No note added</p>
-                  )}
-                  <p className="mt-1.5 text-2xs text-slate-400 dark:text-zinc-500">Added {formatDate(c.createdAt)}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  className="flex-shrink-0"
-                  onClick={() => onToggleClaim(c.companyKey, c.companyName, false)}
-                >
-                  <TrashIcon className="h-4 w-4" />
-                  Remove
-                </Button>
-              </Card>
-            ))}
-          </div>
-        </>
-      )}
 
       <AddCompanyModal
         open={addOpen}

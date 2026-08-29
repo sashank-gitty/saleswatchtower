@@ -314,6 +314,7 @@ function App() {
         open={paletteOpen}
         onClose={() => setPaletteOpen(false)}
         items={signals}
+        accounts={accounts}
         onSelectItem={(item) => openSignal(item.id)}
         onClearFilters={() => navigate("/feed")}
         onToggleTheme={toggleTheme}

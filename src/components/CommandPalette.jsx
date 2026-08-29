@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { pillClassForScope } from "../lib/colors.js"
+import { navigate } from "../lib/router.js"
+import { AccountAvatar } from "./ui.jsx"
 
-function CommandPalette({ open, onClose, items, onSelectItem, onClearFilters, onToggleTheme }) {
+function CommandPalette({ open, onClose, items, accounts = [], onSelectItem, onClearFilters, onToggleTheme }) {
   const [query, setQuery] = useState("")
   const [activeIndex, setActiveIndex] = useState(0)
   const inputRef = useRef(null)
@@ -23,6 +25,20 @@ function CommandPalette({ open, onClose, items, onSelectItem, onClearFilters, on
       .slice(0, 6)
   }, [items, query])
 
+  // This palette is the app's primary search surface — the TopNav
+  // "Search" button opens this, not the /search page. Only shown once
+  // there's a real query: with an empty query matchingItems above
+  // already fills the list with recent signals, and every account would
+  // otherwise be a wall of noise above them.
+  const matchingAccounts = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return []
+    return accounts
+      .filter((a) => a.name.toLowerCase().includes(q))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+  }, [accounts, query])
+
   const actions = useMemo(() => {
     const all = [
       { id: "clear-filters", label: "Clear all filters", run: onClearFilters },
@@ -35,10 +51,11 @@ function CommandPalette({ open, onClose, items, onSelectItem, onClearFilters, on
 
   const entries = useMemo(
     () => [
+      ...matchingAccounts.map((account) => ({ type: "account", id: account.key, account })),
       ...matchingItems.map((item) => ({ type: "item", id: item.id, item })),
       ...actions.map((action) => ({ type: "action", id: action.id, action })),
     ],
-    [matchingItems, actions],
+    [matchingAccounts, matchingItems, actions],
   )
 
   useEffect(() => {
@@ -51,7 +68,8 @@ function CommandPalette({ open, onClose, items, onSelectItem, onClearFilters, on
 
   const runEntry = (entry) => {
     if (!entry) return
-    if (entry.type === "item") onSelectItem(entry.item)
+    if (entry.type === "account") navigate(`/accounts/${encodeURIComponent(entry.account.key)}`)
+    else if (entry.type === "item") onSelectItem(entry.item)
     else entry.action.run()
     onClose()
   }
@@ -105,6 +123,32 @@ function CommandPalette({ open, onClose, items, onSelectItem, onClearFilters, on
         />
 
         <div className="max-h-80 overflow-y-auto p-2">
+          {matchingAccounts.length > 0 && (
+            <div className="mb-1">
+              <p className="px-2 py-1 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Accounts</p>
+              {matchingAccounts.map((account) => {
+                const entryIndex = entries.findIndex((e) => e.type === "account" && e.id === account.key)
+                return (
+                  <button
+                    key={account.key}
+                    ref={(el) => (itemRefs.current[entryIndex] = el)}
+                    type="button"
+                    onMouseEnter={() => setActiveIndex(entryIndex)}
+                    onClick={() => runEntry(entries[entryIndex])}
+                    className={`flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors ${
+                      activeIndex === entryIndex
+                        ? "bg-brand-500/10 text-ink-900 dark:text-zinc-100"
+                        : "text-body-600 hover:bg-slate-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                    }`}
+                  >
+                    <AccountAvatar name={account.name} logoUrl={account.logoUrl} size="sm" />
+                    <span className="truncate">{account.name}</span>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           {matchingItems.length > 0 && (
             <div className="mb-1">
               <p className="px-2 py-1 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Signals</p>
@@ -158,7 +202,7 @@ function CommandPalette({ open, onClose, items, onSelectItem, onClearFilters, on
             </div>
           )}
 
-          {matchingItems.length === 0 && actions.length === 0 && (
+          {matchingAccounts.length === 0 && matchingItems.length === 0 && actions.length === 0 && (
             <p className="px-2 py-4 text-center text-sm text-slate-400 dark:text-zinc-500">No matches.</p>
           )}
         </div>
