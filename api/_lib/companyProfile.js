@@ -25,7 +25,9 @@ Search the web for the real company named in the request, then respond with ONLY
 - "foundedYear": integer year founded. Omit if unknown.
 - "sourceUrls": a JSON array of the real URLs you actually drew this from.
 
-Every field is optional except you must make a genuine effort to find each one. Omit a field entirely rather than guessing, inventing, or writing "unknown" — a missing field is honest, a made-up one is not. If you cannot find the company at all (name too generic, no real company matches), respond with exactly: {"notFound": true}`
+Every field is optional except you must make a genuine effort to find each one. Omit a field entirely rather than guessing, inventing, or writing "unknown" — a missing field is honest, a made-up one is not. If you cannot find the company at all (name too generic, no real company matches), respond with exactly: {"notFound": true}
+
+Use the search tool as many times as you need first. Once you're done searching, your VERY LAST message must contain the JSON object and nothing else — no lead-in sentence like "Now I have enough information" or "Here is the JSON", no closing remarks, no markdown fences. The JSON object should be the entire content of your final message.`
 
 export async function researchCompanyProfile(companyName) {
   const spend = await monthToDateSpend()
@@ -49,17 +51,32 @@ export async function researchCompanyProfile(companyName) {
   // immaterial at the volume this runs at (once per newly tracked company).
   await recordSpend(response.usage.input_tokens, response.usage.output_tokens)
 
-  const text = response.content.find((block) => block.type === "text")?.text?.trim() ?? ""
-  if (!text) {
+  // Unlike normalize.js (a plain completion, no tools — realistically one
+  // text block), a web-search turn can produce several text blocks: a
+  // short narration before/between searches, then the real answer last.
+  // Confirmed by a real failure — the model wrote "Now I have enough
+  // information to compile the JSON response." as its own text block,
+  // and taking the FIRST text block (normalize.js's pattern) grabbed
+  // that instead of the JSON that followed. Take the LAST text block —
+  // the model's actual final answer — and additionally slice out
+  // whatever's between the first "{" and the last "}" in case that block
+  // still carries a stray lead-in or trailing sentence around the JSON.
+  const textBlocks = response.content.filter((block) => block.type === "text")
+  const rawText = textBlocks[textBlocks.length - 1]?.text?.trim() ?? ""
+  if (!rawText) {
     console.warn("researchCompanyProfile: no text in response for", companyName)
     return null
   }
+
+  const start = rawText.indexOf("{")
+  const end = rawText.lastIndexOf("}")
+  const text = start !== -1 && end !== -1 && end > start ? rawText.slice(start, end + 1) : rawText
 
   let parsed
   try {
     parsed = JSON.parse(text)
   } catch {
-    console.warn("researchCompanyProfile: model did not return valid JSON:", text.slice(0, 200))
+    console.warn("researchCompanyProfile: model did not return valid JSON:", rawText.slice(0, 200))
     return null
   }
 
