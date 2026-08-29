@@ -79,7 +79,22 @@ async function pickCompaniesToResearch(state) {
 // you've set it up locally), explicitly NOT including DATABASE_URL. The
 // database write happens in this script, after the subprocess exits.
 function claudeSubprocessEnv() {
-  const allow = ["PATH", "HOME", "AUTH_TOKEN", "CT0", "XAI_API_KEY", "BSKY_HANDLE", "BSKY_APP_PASSWORD", "SCRAPECREATORS_API_KEY"]
+  // SHELL/USER/LOGNAME confirmed required by running this for real — the
+  // `claude` CLI reported "Not logged in" without them, even fully
+  // authenticated, when spawned with only PATH+HOME set.
+  const allow = [
+    "PATH",
+    "HOME",
+    "SHELL",
+    "USER",
+    "LOGNAME",
+    "AUTH_TOKEN",
+    "CT0",
+    "XAI_API_KEY",
+    "BSKY_HANDLE",
+    "BSKY_APP_PASSWORD",
+    "SCRAPECREATORS_API_KEY",
+  ]
   const env = {}
   for (const key of allow) {
     if (process.env[key]) env[key] = process.env[key]
@@ -89,13 +104,16 @@ function claudeSubprocessEnv() {
 
 function runClaudeHeadless(prompt) {
   return new Promise((resolve, reject) => {
-    // --allowedTools syntax/flag name may not match your installed CLI
-    // version exactly — verify with `claude -p --help` and adjust if
-    // needed, same caveat as sync-last30days.mjs.
+    // --allowedTools syntax verified against a real installed CLI
+    // (2.1.251) while building this. stdio[0] must be explicitly
+    // "ignore" — spawn() defaults stdin to an open, never-written pipe,
+    // which made the real `claude` CLI wait ~3s for piped input that was
+    // never coming, then exit 1. Confirmed by running this for real, not
+    // guessed.
     const child = spawn(
       "claude",
       ["-p", prompt, "--allowedTools", "Skill,WebSearch,Bash,Read,Write"],
-      { env: claudeSubprocessEnv() },
+      { env: claudeSubprocessEnv(), stdio: ["ignore", "pipe", "pipe"] },
     )
 
     const timer = setTimeout(() => {
