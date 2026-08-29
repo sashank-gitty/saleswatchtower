@@ -8,6 +8,8 @@ export function buildHiringSignalPrompt(companyName, outputPath) {
 
 If the "agent-reach" skill is available to you, use it to search relevant social platforms (LinkedIn especially, but also X/Twitter, Reddit, or company blogs) for real posts about this company growing its team. If it isn't available, or on top of it, use WebSearch directly for the same thing: LinkedIn posts about team expansion, press coverage of a hiring push, a new office or team stand-up, a "we're hiring" announcement with real substance (not just a generic evergreen careers page).
 
+Also check job boards directly via WebSearch — Seek, Indeed, and Glassdoor — for a real, current volume of open roles at this company, or a notable pattern (e.g. many roles in one function or location opening at once). agent-reach has no dedicated connector for these three sites, so reach them through plain web search, not the agent-reach skill.
+
 Only write up a finding when you have a real, checkable source — an actual URL you found, not a guess or a plausible-sounding one. If nothing genuinely new turned up for this company in that window, that's a valid outcome — write an empty array rather than forcing something weak.
 
 Write a JSON array (and nothing else — no prose, no markdown fences) to the file at exactly this path: ${outputPath}

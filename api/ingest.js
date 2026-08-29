@@ -5,6 +5,7 @@ import { normalizeItem, BudgetExceededError } from "./_lib/normalize.js"
 import { buildCompanyMatcher } from "./_lib/matchCompanies.js"
 import { watchlistForRun } from "./_lib/watchlist.js"
 import { fetchAsxFilings } from "./_lib/fetchAsxFilings.js"
+import { fetchMarketData } from "./_lib/fetchMarketData.js"
 
 // Hard cap on LLM normalization calls per run — bounds both cost and
 // Vercel function execution time regardless of how many raw RSS items
@@ -66,11 +67,18 @@ export default async function handler(req, res) {
     asxQueried: 0,
     asxInserted: 0,
     asxErrors: [],
+    // Real market data (api/_lib/fetchMarketData.js, Finnhub) — a
+    // current-state upsert into company_market_data, not a signals
+    // insert, so there's no "inserted" count the same shape as the
+    // sources above; "updated" is how many companies got a fresh row.
+    marketDataQueried: 0,
+    marketDataUpdated: 0,
+    marketDataErrors: [],
   }
 
   try {
     const trackedCompanies = await sql`
-      SELECT company_key, company_name, is_competitor, asx_ticker FROM tracked_companies
+      SELECT company_key, company_name, is_competitor, asx_ticker, stock_ticker FROM tracked_companies
     `
     const matcher = buildCompanyMatcher(
       trackedCompanies.map((row) => ({
@@ -199,6 +207,44 @@ export default async function handler(req, res) {
       } catch (err) {
         console.error("ingest: failed on ASX filing", filing.dedupeKey, err)
         summary.asxErrors.push({ ticker: filing.companyKey, message: err.message })
+      }
+    }
+
+    // Market data: current-state context (price, market cap, next
+    // earnings date), not a discrete event, so this upserts into
+    // company_market_data directly rather than inserting into signals —
+    // same reasoning as company_profiles. Plain REST, no LLM involved.
+    const companiesWithStockTickers = trackedCompanies
+      .filter((row) => row.stock_ticker)
+      .map((row) => ({ companyKey: row.company_key, companyName: row.company_name, stockTicker: row.stock_ticker }))
+    summary.marketDataQueried = companiesWithStockTickers.length
+
+    const { items: marketDataItems, errors: marketDataFetchErrors } = await fetchMarketData(companiesWithStockTickers)
+    summary.marketDataErrors = marketDataFetchErrors
+
+    for (const data of marketDataItems) {
+      try {
+        await sql`
+          INSERT INTO company_market_data (
+            company_key, company_name, ticker, exchange, price, price_change_pct, market_cap, next_earnings_date
+          )
+          VALUES (
+            ${data.companyKey}, ${data.companyName}, ${data.ticker}, ${data.exchange},
+            ${data.price}, ${data.priceChangePct}, ${data.marketCap}, ${data.nextEarningsDate}
+          )
+          ON CONFLICT (company_key) DO UPDATE SET
+            ticker = EXCLUDED.ticker,
+            exchange = EXCLUDED.exchange,
+            price = EXCLUDED.price,
+            price_change_pct = EXCLUDED.price_change_pct,
+            market_cap = EXCLUDED.market_cap,
+            next_earnings_date = EXCLUDED.next_earnings_date,
+            updated_at = now()
+        `
+        summary.marketDataUpdated += 1
+      } catch (err) {
+        console.error("ingest: failed on market data", data.companyKey, err)
+        summary.marketDataErrors.push({ ticker: data.ticker, message: err.message })
       }
     }
 

@@ -15,10 +15,11 @@ import Settings from "./pages/Settings.jsx"
 import { useTheme } from "./lib/useTheme.js"
 import { useRoute, navigate } from "./lib/router.js"
 import { useUrlState } from "./lib/useUrlState.js"
-import { deriveAccounts, findAccount } from "./lib/accountModel.js"
+import { deriveAccounts, findAccount, accountKey } from "./lib/accountModel.js"
 import { useAlerts, matchAlert } from "./lib/useAlerts.js"
 import { useCompanies } from "./lib/useCompanies.js"
 import { useSentiment } from "./lib/useSentiment.js"
+import { useMarketData } from "./lib/useMarketData.js"
 import { Button } from "./components/ui.jsx"
 
 function App() {
@@ -115,6 +116,7 @@ function App() {
 
   const { companies, isTracked, trackedAt, setCompany } = useCompanies()
   const { sentimentFor } = useSentiment()
+  const { marketDataFor } = useMarketData()
   const accounts = useMemo(() => deriveAccounts(signals, companies), [signals, companies])
 
   const openItem = useMemo(() => signals.find((s) => s.id === openSignalId) ?? null, [signals, openSignalId])
@@ -137,6 +139,20 @@ function App() {
       .sort(byDateDesc)
 
     return [...sameEntity, ...widened].slice(0, 5)
+  }, [signals, openItem])
+
+  // Real hiring-signal rows (scripts/local/sync-hiring-signals.mjs) for
+  // the account the open signal belongs to — same "which account does
+  // this name" derivation SignalDetailPanel itself uses
+  // (matchedCompanies[0] ?? entity), computed once here rather than
+  // duplicated inside that component.
+  const hiringSignalsForOpenAccount = useMemo(() => {
+    if (!openItem) return []
+    const account = (openItem.matchedCompanies ?? [])[0] ?? openItem.entity
+    return signals
+      .filter((s) => s.origin === "hiring_signal")
+      .filter((s) => (s.matchedCompanies ?? []).includes(account) || s.entity === account)
+      .sort((a, b) => (a.date < b.date ? 1 : -1))
   }, [signals, openItem])
 
   const openSignal = (id) => updateUrl({ signal: id }, { push: true })
@@ -311,6 +327,12 @@ function App() {
         relatedItems={relatedItems}
         onSelectRelated={(id) => openSignal(id)}
         companies={companies}
+        hiringSignals={hiringSignalsForOpenAccount}
+        marketData={
+          openItem
+            ? marketDataFor(accountKey((openItem.matchedCompanies ?? [])[0] ?? openItem.entity))
+            : null
+        }
       />
     </div>
   )

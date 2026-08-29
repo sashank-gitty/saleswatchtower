@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     try {
       const rows = await sql`
         SELECT
-          tc.company_key, tc.company_name, tc.status, tc.is_competitor, tc.note, tc.asx_ticker, tc.created_at,
+          tc.company_key, tc.company_name, tc.status, tc.is_competitor, tc.note, tc.asx_ticker, tc.stock_ticker, tc.created_at,
           cp.domain, cp.logo_url, cp.industry, cp.description, cp.business_model, cp.offerings,
           cp.headquarters, cp.employee_count, cp.employee_growth, cp.founded_year, cp.updated_at AS profile_updated_at
         FROM tracked_companies tc
@@ -24,6 +24,7 @@ export default async function handler(req, res) {
           isCompetitor: row.is_competitor,
           note: row.note,
           asxTicker: row.asx_ticker,
+          stockTicker: row.stock_ticker,
           createdAt: row.created_at,
           domain: row.domain,
           logoUrl: row.logo_url,
@@ -46,7 +47,7 @@ export default async function handler(req, res) {
   }
 
   if (req.method === "POST") {
-    const { companyKey, companyName, status, isCompetitor, note, asxTicker } = req.body ?? {}
+    const { companyKey, companyName, status, isCompetitor, note, asxTicker, stockTicker } = req.body ?? {}
 
     if (typeof companyKey !== "string" || !companyKey) {
       res.status(400).json({ error: "companyKey must be a non-empty string" })
@@ -65,18 +66,24 @@ export default async function handler(req, res) {
     // ASX tickers are actually written, so a stray lowercase/space typo
     // doesn't silently fail to match.
     const normalizedTicker = typeof asxTicker === "string" ? asxTicker.trim().toUpperCase() || null : null
+    // Kept as its own field, not reused from asxTicker — Finnhub's symbol
+    // for an ASX-listed stock is typically "NAB.AX", a different string
+    // from the bare "NAB" the ASX filings source wants. See
+    // db/migrations/008_add_market_data.sql.
+    const normalizedStockTicker = typeof stockTicker === "string" ? stockTicker.trim().toUpperCase() || null : null
 
     try {
       await sql`
-        INSERT INTO tracked_companies (company_key, company_name, status, is_competitor, note, asx_ticker)
-        VALUES (${companyKey}, ${companyName}, ${status ?? null}, ${Boolean(isCompetitor)}, ${note ?? null}, ${normalizedTicker})
+        INSERT INTO tracked_companies (company_key, company_name, status, is_competitor, note, asx_ticker, stock_ticker)
+        VALUES (${companyKey}, ${companyName}, ${status ?? null}, ${Boolean(isCompetitor)}, ${note ?? null}, ${normalizedTicker}, ${normalizedStockTicker})
         ON CONFLICT (company_key)
         DO UPDATE SET
           company_name = EXCLUDED.company_name,
           status = EXCLUDED.status,
           is_competitor = EXCLUDED.is_competitor,
           note = EXCLUDED.note,
-          asx_ticker = EXCLUDED.asx_ticker
+          asx_ticker = EXCLUDED.asx_ticker,
+          stock_ticker = EXCLUDED.stock_ticker
       `
       res.status(200).json({
         companyKey,
@@ -85,6 +92,7 @@ export default async function handler(req, res) {
         isCompetitor: Boolean(isCompetitor),
         note: note ?? null,
         asxTicker: normalizedTicker,
+        stockTicker: normalizedStockTicker,
       })
     } catch (err) {
       console.error("POST /api/companies failed:", err)

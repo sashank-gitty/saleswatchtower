@@ -102,7 +102,17 @@ function CopyButton({ value, label = "Copy" }) {
 // mounted and scrolled to where it was underneath, so opening a signal to
 // read the full summary doesn't cost the "at a glance, scan many" value
 // the rest of the dashboard is built around. Deep-linkable via ?signal=.
-function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems, onSelectRelated, companies = [] }) {
+function SignalDetailPanel({
+  item,
+  open,
+  onClose,
+  onToggleReviewed,
+  relatedItems,
+  onSelectRelated,
+  companies = [],
+  hiringSignals = [],
+  marketData = null,
+}) {
   const [find, setFind] = useState("")
   const [findOpen, setFindOpen] = useState(false)
   const [activeMatch, setActiveMatch] = useState(0)
@@ -460,20 +470,82 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
             </Collapsible>
           )}
 
-          <Collapsible title="Hiring & Intent" defaultOpen={false}>
-            <NotIngested
-              title="Not connected yet"
-              note="Job postings, headcount surges, and buyer-intent signals for this account aren't in this pipeline today — it ingests Google News RSS only. Lusha and ZoomInfo both expose exactly this (new job posts, hiring surges, LinkedIn buying-intent) and are the obvious next connector to wire in, pending an API key configured for this deployment."
-              sources={["Lusha hiring & intent signals", "ZoomInfo intent / scoops", "LinkedIn job postings"]}
-            />
+          <Collapsible title="Hiring & Intent" defaultOpen={hiringSignals.length > 0}>
+            {hiringSignals.length > 0 ? (
+              <div className="flex flex-col gap-1">
+                {hiringSignals.map((signal) => (
+                  <a
+                    key={signal.id}
+                    href={signal.sourceUrl}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="group flex items-start gap-2 rounded-md px-2 py-1.5 text-left text-dense text-body-600 transition-colors hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80"
+                  >
+                    <time className="flex-shrink-0 pt-0.5 text-2xs tabular-nums text-slate-400 dark:text-zinc-500">
+                      {formatDate(signal.date)}
+                    </time>
+                    <span className="min-w-0 flex-1">{signal.headline}</span>
+                    <ExternalLinkIcon className="mt-0.5 h-3 w-3 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <NotIngested
+                title="No hiring signals found yet"
+                note="This runs from a script on your own Mac (not this website), checking LinkedIn, Seek, Indeed, and Glassdoor for real team-growth activity — see scripts/local/README.md's hiring-signal-sync section. Either it hasn't run for this account yet, or it ran and genuinely found nothing worth reporting this pass."
+                sources={["LinkedIn (via agent-reach)", "Seek", "Indeed", "Glassdoor"]}
+              />
+            )}
           </Collapsible>
 
-          <Collapsible title="Market Data" defaultOpen={false}>
-            <NotIngested
-              title="Not connected yet"
-              note="Stock price, market cap, and earnings context for this account aren't in this pipeline today. A free-tier market-data API (e.g. Finnhub or Alpha Vantage) is the planned source, pending an API key — it would only ever cover accounts with a public ticker."
-              sources={["Finnhub / Alpha Vantage", "Earnings calendar"]}
-            />
+          <Collapsible title="Market Data" defaultOpen={Boolean(marketData)}>
+            {marketData ? (
+              <dl className="space-y-2.5">
+                <div className="flex gap-4">
+                  <dt className="w-28 flex-shrink-0 text-xs text-body-500 dark:text-zinc-400">Price</dt>
+                  <dd className="text-xs tabular-nums text-ink-900 dark:text-zinc-100">
+                    {marketData.price != null ? `$${Number(marketData.price).toFixed(2)}` : "—"}
+                    {marketData.priceChangePct != null && (
+                      <span className={`ml-1.5 font-semibold ${marketData.priceChangePct >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                        {marketData.priceChangePct >= 0 ? "+" : ""}
+                        {Number(marketData.priceChangePct).toFixed(2)}%
+                      </span>
+                    )}
+                  </dd>
+                </div>
+                <div className="flex gap-4">
+                  <dt className="w-28 flex-shrink-0 text-xs text-body-500 dark:text-zinc-400">Market cap</dt>
+                  <dd className="text-xs tabular-nums text-ink-900 dark:text-zinc-100">
+                    {marketData.marketCap != null ? `$${Number(marketData.marketCap).toLocaleString()}M` : "—"}
+                  </dd>
+                </div>
+                <div className="flex gap-4">
+                  <dt className="w-28 flex-shrink-0 text-xs text-body-500 dark:text-zinc-400">Next earnings</dt>
+                  <dd className="text-xs tabular-nums text-ink-900 dark:text-zinc-100">
+                    {marketData.nextEarningsDate ? formatDate(marketData.nextEarningsDate) : "Not scheduled"}
+                  </dd>
+                </div>
+                <div className="flex gap-4">
+                  <dt className="w-28 flex-shrink-0 text-xs text-body-500 dark:text-zinc-400">Ticker</dt>
+                  <dd className="text-xs text-ink-900 dark:text-zinc-100">
+                    {marketData.ticker}
+                    {marketData.exchange && <span className="text-body-500 dark:text-zinc-400"> · {marketData.exchange}</span>}
+                  </dd>
+                </div>
+              </dl>
+            ) : trackedCompany?.stockTicker ? (
+              <NotIngested
+                title="No market data yet"
+                note={`A stock ticker (${trackedCompany.stockTicker}) is set for this company, but the daily ingest run hasn't fetched its market data yet — check back after the next run.`}
+                sources={["Finnhub"]}
+              />
+            ) : (
+              <NotIngested
+                title="No stock ticker set"
+                note="Stock price, market cap, and earnings context only ever apply to a publicly listed company. Add a stock ticker on the Accounts page (Track a Company, or edit an existing tracked company) to start pulling this."
+                sources={["Finnhub"]}
+              />
+            )}
           </Collapsible>
         </div>
 

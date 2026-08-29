@@ -36,6 +36,7 @@ function AddCompanyModal({ open, onClose, onAdd }) {
   const [status, setStatus] = useState(null)
   const [isCompetitor, setIsCompetitor] = useState(false)
   const [asxTicker, setAsxTicker] = useState("")
+  const [stockTicker, setStockTicker] = useState("")
 
   const handleClose = () => {
     setName("")
@@ -43,6 +44,7 @@ function AddCompanyModal({ open, onClose, onAdd }) {
     setStatus(null)
     setIsCompetitor(false)
     setAsxTicker("")
+    setStockTicker("")
     onClose()
   }
 
@@ -50,7 +52,13 @@ function AddCompanyModal({ open, onClose, onAdd }) {
     e.preventDefault()
     const trimmedName = name.trim()
     if (!trimmedName) return
-    onAdd(accountKey(trimmedName), trimmedName, { status, isCompetitor, note: note.trim() || null, asxTicker: asxTicker.trim() || null })
+    onAdd(accountKey(trimmedName), trimmedName, {
+      status,
+      isCompetitor,
+      note: note.trim() || null,
+      asxTicker: asxTicker.trim() || null,
+      stockTicker: stockTicker.trim() || null,
+    })
     handleClose()
   }
 
@@ -83,6 +91,16 @@ function AddCompanyModal({ open, onClose, onAdd }) {
             value={asxTicker}
             onChange={(e) => setAsxTicker(e.target.value)}
             placeholder="e.g. CBA"
+          />
+        </Field>
+        <Field
+          label="Stock ticker (optional)"
+          hint="Only if this company is publicly listed anywhere — pulls a real stock price, market cap, and next earnings date. Use the exact symbol format Finnhub expects: the bare US ticker for a US-listed company (e.g. CVX for Chevron), or with an exchange suffix for others (e.g. NAB.AX for an ASX-listed company — note this is different from the ASX ticker above, which wants the bare code)."
+        >
+          <TextInput
+            value={stockTicker}
+            onChange={(e) => setStockTicker(e.target.value)}
+            placeholder="e.g. CVX or NAB.AX"
           />
         </Field>
         <Field label="Why you're tracking this (optional)">
