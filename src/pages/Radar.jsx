@@ -73,8 +73,8 @@ function AgentCard({ icon: Icon, name, role, status, detail, tone }) {
   )
 }
 
-function Radar({ signals, companies = [], syncStatus, onOpenSignal, loading }) {
-  const accounts = useMemo(() => deriveAccounts(signals, companies), [signals, companies])
+function Radar({ signals, companies = [], logoByKey = new Map(), syncStatus, onOpenSignal, loading }) {
+  const accounts = useMemo(() => deriveAccounts(signals, companies, logoByKey), [signals, companies, logoByKey])
   const competitors = useMemo(() => deriveCompetitors(signals, companies), [signals, companies])
 
   const priorities = useMemo(() => accounts.filter((a) => a.highRelevanceCount > 0).slice(0, 8), [accounts])

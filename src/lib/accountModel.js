@@ -243,7 +243,7 @@ export function signalTrend(signals, now = Date.now()) {
 // which matched names are competitors (excluded here, see
 // accountNamesFor) and to carry each tracked company's status/note onto
 // its account row.
-export function deriveAccounts(signals, companies = [], now = Date.now()) {
+export function deriveAccounts(signals, companies = [], logoByKey = new Map(), now = Date.now()) {
   const competitorKeys = new Set(companies.filter((c) => c.isCompetitor).map((c) => c.companyKey))
   const companiesByKey = new Map(companies.map((c) => [c.companyKey, c]))
 
@@ -325,11 +325,13 @@ export function deriveAccounts(signals, companies = [], now = Date.now()) {
         status: tracked?.status ?? (managed ? "prospect" : null),
         note: tracked?.note ?? null,
         managed,
-        // Company-snapshot fields (api/_lib/companyProfile.js) — only a
-        // tracked company can have one, since that's the only time it
-        // gets fetched. Untracked/derived accounts carry nulls, same as
-        // status/note above.
-        logoUrl: tracked?.logoUrl ?? null,
+        // Company-snapshot fields (api/_lib/companyProfile.js) — the
+        // fuller snapshot fields below are only ever fetched for a
+        // tracked company. The logo itself is broader: every account
+        // gets a light, domain-only company_profiles row regardless of
+        // tracked status (api/company-logos.js), so this falls back to
+        // that lookup before giving up and showing initials.
+        logoUrl: tracked?.logoUrl ?? logoByKey.get(account.key) ?? null,
         domain: tracked?.domain ?? null,
         industry: tracked?.industry ?? null,
         description: tracked?.description ?? null,

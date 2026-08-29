@@ -29,6 +29,53 @@ Every field is optional except you must make a genuine effort to find each one. 
 
 Use the search tool as many times as you need first. Once you're done searching, your VERY LAST message must contain the JSON object and nothing else — no lead-in sentence like "Now I have enough information" or "Here is the JSON", no closing remarks, no markdown fences. The JSON object should be the entire content of your final message.`
 
+// Light-weight sibling to researchCompanyProfile() below: every account
+// on the dashboard gets a real logo (not just tracked companies), but
+// the only thing a logo needs is the company's domain — unavatar.io does
+// the rest. Running the full 5-search, 35-50s research pipeline just for
+// a domain would be slow and wasteful for the ~30 companies that pass
+// through the feed without ever being tracked. This is a single short
+// completion, no web-search tool, small max_tokens — seconds, not
+// minutes. Shares the same budget guard as the full pipeline.
+const DOMAIN_SYSTEM_PROMPT = `You are given a company name. Respond with ONLY a single JSON object (no prose, no markdown fences): {"domain": "example.com"} — the company's real primary website domain, no protocol or path. If you cannot confidently identify a real company matching this name, respond with exactly: {"domain": null}`
+
+export async function researchCompanyDomain(companyName) {
+  const spend = await monthToDateSpend()
+  if (spend >= MONTHLY_BUDGET_USD) {
+    throw new BudgetExceededError(spend)
+  }
+
+  const response = await anthropic.messages.create(
+    {
+      model: "claude-sonnet-5",
+      max_tokens: 200,
+      system: DOMAIN_SYSTEM_PROMPT,
+      messages: [{ role: "user", content: `Company name: ${companyName}` }],
+    },
+    { timeout: 15_000, maxRetries: 0 },
+  )
+
+  await recordSpend(response.usage.input_tokens, response.usage.output_tokens)
+
+  const textBlocks = response.content.filter((block) => block.type === "text")
+  const rawText = textBlocks[textBlocks.length - 1]?.text?.trim() ?? ""
+  if (!rawText) return null
+
+  const start = rawText.indexOf("{")
+  const end = rawText.lastIndexOf("}")
+  const text = start !== -1 && end !== -1 && end > start ? rawText.slice(start, end + 1) : rawText
+
+  let parsed
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    return null
+  }
+
+  if (typeof parsed.domain !== "string" || !parsed.domain) return null
+  return { domain: parsed.domain, logoUrl: `https://unavatar.io/${parsed.domain}` }
+}
+
 export async function researchCompanyProfile(companyName) {
   const spend = await monthToDateSpend()
   if (spend >= MONTHLY_BUDGET_USD) {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react"
-import { navigate } from "../lib/router.js"
+import { linkProps, navigate } from "../lib/router.js"
 import { computeBriefing } from "../lib/briefing.js"
 import { buildSignalReason } from "../lib/signalReason.js"
 import {
@@ -12,7 +12,10 @@ import {
   Eyebrow,
   GradientText,
   StatTile,
+  AccountAvatar,
+  ScoreBadge,
 } from "../components/ui.jsx"
+import { ChevronRightIcon } from "../components/icons.jsx"
 import SignalRow from "../components/SignalRow.jsx"
 import Checkbox from "../components/Checkbox.jsx"
 
@@ -153,9 +156,23 @@ function TypeBreakdown({ typeCounts }) {
   )
 }
 
-function Briefing({ signals, companies = [], loading, onOpenSignal, onToggleReviewed, onMarkManyReviewed }) {
+function Briefing({ signals, companies = [], accounts = [], loading, onOpenSignal, onToggleReviewed, onMarkManyReviewed }) {
   const ingestStatus = useIngestStatus()
   const briefing = computeBriefing(signals)
+
+  // The one thing to look at first. accounts is already sorted highest
+  // score first (accountModel.js), so the first match in each fallback
+  // tier is the right one: a tracked account with something genuinely
+  // worth acting on, then any tracked account, then whatever's on top
+  // overall if nothing is tracked yet.
+  const topPriority = useMemo(
+    () =>
+      accounts.find((a) => a.managed && a.highRelevanceCount > 0) ??
+      accounts.find((a) => a.managed) ??
+      accounts[0] ??
+      null,
+    [accounts],
+  )
   // Tracked-account signals first, same "what's mine" vs "what's out
   // there" split as Global Feed — a real prospect's own news shouldn't
   // sit below a company you've never heard of just because it's newer.
@@ -233,33 +250,43 @@ function Briefing({ signals, companies = [], loading, onOpenSignal, onToggleRevi
       </PageHeader>
 
       {loading ? (
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-[124px] animate-pulse rounded-xl bg-slate-100 dark:bg-zinc-800/60" />
-          ))}
+        <div className="space-y-4">
+          <div className="h-32 animate-pulse rounded-xl bg-slate-100 dark:bg-zinc-800/60" />
+          <div className="grid grid-cols-2 gap-4">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="h-[92px] animate-pulse rounded-xl bg-slate-100 dark:bg-zinc-800/60" />
+            ))}
+          </div>
         </div>
       ) : (
         <>
-          <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {topPriority && (
+            <a
+              {...linkProps(`/accounts/${encodeURIComponent(topPriority.key)}`)}
+              className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 transition-colors hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-500/40"
+            >
+              <AccountAvatar name={topPriority.name} logoUrl={topPriority.logoUrl} size="lg" />
+              <div className="min-w-0 flex-1">
+                <p className="text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                  Look here first
+                </p>
+                <p className="mt-0.5 truncate text-lg font-bold text-ink-900 dark:text-zinc-50">{topPriority.name}</p>
+                <p className="mt-0.5 text-dense text-body-600 dark:text-zinc-300">{topPriority.whyNow}</p>
+              </div>
+              <div className="flex flex-shrink-0 items-center gap-2">
+                <ScoreBadge score={topPriority.score} size="lg" />
+                <ChevronRightIcon className="h-5 w-5 text-slate-400 dark:text-zinc-500" />
+              </div>
+            </a>
+          )}
+
+          <div className="mb-8 grid grid-cols-2 gap-4">
             <StatTile
               label="New since yesterday"
               value={briefing.newSinceYesterday.length}
               sub="signals in the last 24h"
               tone="ink"
               onClick={() => navigate("/feed?range=1")}
-            />
-            <StatTile
-              label="High relevance"
-              value={briefing.highRelevance.length}
-              sub="rated 4–5 of 5"
-              onClick={() => navigate("/feed?relevance=high")}
-            />
-            <StatTile
-              label="Account-matched"
-              value={briefing.accountMatched.length}
-              sub="named a tracked company"
-              tone="ink"
-              onClick={() => navigate("/feed?matched=1")}
             />
             <StatTile
               label="Unreviewed"

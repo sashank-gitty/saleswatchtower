@@ -28,43 +28,45 @@ import {
 // exactly one group; anything unrecognized falls through to "other" so a
 // new type from the normalizer is never silently invisible.
 //
-// Each group also owns exactly one colour, and that colour is used
-// everywhere the group appears — the icon badge on a feed row, the tab in
-// the account strip, the citation pill in a brief. One colour per group,
-// never per surface: the whole point of the icon-badge system is that a
-// reader learns "amber means research" once and it holds on every page.
+// Each group is told apart by its icon shape, not its colour — every
+// group is neutral slate except regulatory, which stays rose as the
+// one real urgency signal. Colour used to be one-per-group here, but
+// with 8 categories that meant 8 competing hues on every row; the icon
+// still reads consistently everywhere the group appears (feed row,
+// account tab strip, citation pill), just without a second colour axis
+// duplicating what the shape already says.
 export const SIGNAL_GROUPS = [
   {
     id: "news",
-    tone: "sky",
+    tone: "slate",
     label: "News & Press",
     Icon: NewspaperIcon,
     types: ["market shift", "brand move", "product launch", "new entrant"],
   },
   {
     id: "leadership",
-    tone: "violet",
+    tone: "slate",
     label: "Leadership",
     Icon: PersonPlusIcon,
     types: ["leadership change"],
   },
   {
     id: "earnings",
-    tone: "emerald",
+    tone: "slate",
     label: "Earnings",
     Icon: ChartIcon,
     types: ["earnings"],
   },
   {
     id: "funding",
-    tone: "teal",
+    tone: "slate",
     label: "Funding & M&A",
     Icon: BriefcaseIcon,
     types: ["funding", "partnership"],
   },
   {
     id: "research",
-    tone: "amber",
+    tone: "slate",
     label: "Research & Reports",
     Icon: DocumentIcon,
     types: ["analyst report", "research shift"],
@@ -78,14 +80,14 @@ export const SIGNAL_GROUPS = [
   },
   {
     id: "transformation",
-    tone: "indigo",
+    tone: "slate",
     label: "Transformation",
     Icon: SparklesIcon,
     types: ["digital transformation", "restructure"],
   },
   {
     id: "community",
-    tone: "pink",
+    tone: "slate",
     label: "Community",
     Icon: MicIcon,
     // The one group keyed off origin rather than signal type: community

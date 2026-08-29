@@ -122,7 +122,7 @@ function AddCompanyModal({ open, onClose, onAdd }) {
 // separate page for; Track-a-Company moved here too, so there's exactly
 // one place to manage accounts instead of two that looked like they
 // might mean different things.
-function Accounts({ signals, companies = [], loading, isClaimed, onToggleClaim, initialType = null }) {
+function Accounts({ signals, companies = [], logoByKey = new Map(), loading, isClaimed, onToggleClaim, initialType = null }) {
   const [search, setSearch] = useState("")
   const [type, setType] = useState(initialType)
   const [priority, setPriority] = useState(null)
@@ -131,7 +131,7 @@ function Accounts({ signals, companies = [], loading, isClaimed, onToggleClaim, 
 
   const [starred, setStarred] = useLocalStorageState("sdr-dashboard-starred-accounts", [])
 
-  const accounts = useMemo(() => deriveAccounts(signals, companies), [signals, companies])
+  const accounts = useMemo(() => deriveAccounts(signals, companies, logoByKey), [signals, companies, logoByKey])
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()

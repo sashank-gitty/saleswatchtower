@@ -6,6 +6,15 @@ import { buildCompanyMatcher } from "./_lib/matchCompanies.js"
 import { watchlistForRun } from "./_lib/watchlist.js"
 import { fetchAsxFilings } from "./_lib/fetchAsxFilings.js"
 import { fetchMarketData } from "./_lib/fetchMarketData.js"
+import { researchCompanyDomain } from "./_lib/companyProfile.js"
+import { companyKey } from "../shared/companyKey.js"
+
+// Cap on light logo lookups per run (see the block after ingest below) —
+// each is a short, single completion, so this is generous relative to
+// the run's real time budget while still keeping one run from trying to
+// backfill dozens of companies at once. Whatever doesn't fit this run
+// picks up on the next daily run — self-healing, not a hard deadline.
+const MAX_LOGOS_PER_RUN = 5
 
 // Hard cap on LLM normalization calls per run — bounds both cost and
 // Vercel function execution time regardless of how many raw RSS items
@@ -74,6 +83,14 @@ export default async function handler(req, res) {
     marketDataQueried: 0,
     marketDataUpdated: 0,
     marketDataErrors: [],
+    // Light logo-only company_profiles rows (api/_lib/companyProfile.js's
+    // researchCompanyDomain, api/company-logos.js) — covers every account
+    // that shows up in the feed, tracked or not, not just companies
+    // you've deliberately tracked (those get the full profile instead,
+    // via api/company-profile.js).
+    logosQueried: 0,
+    logosInserted: 0,
+    logosErrors: [],
   }
 
   try {
@@ -245,6 +262,46 @@ export default async function handler(req, res) {
       } catch (err) {
         console.error("ingest: failed on market data", data.companyKey, err)
         summary.marketDataErrors.push({ ticker: data.ticker, message: err.message })
+      }
+    }
+
+    // Light logo backfill: every distinct company a micro-scope signal
+    // has ever named, tracked or not, that doesn't have a company_profiles
+    // row yet. Deliberately reads from the whole signals table, not just
+    // this run's new items — a backlog from before this existed, or from
+    // a run that hit MAX_LOGOS_PER_RUN, gets picked up here too.
+    const microEntities = await sql`
+      SELECT DISTINCT entity FROM signals WHERE scope = 'micro' AND entity IS NOT NULL
+    `
+    const existingProfileKeys = new Set((await sql`SELECT company_key FROM company_profiles`).map((r) => r.company_key))
+
+    const missingLogos = []
+    const seenKeys = new Set()
+    for (const row of microEntities) {
+      const key = companyKey(row.entity)
+      if (!key || existingProfileKeys.has(key) || seenKeys.has(key)) continue
+      seenKeys.add(key)
+      missingLogos.push({ key, name: row.entity })
+    }
+    summary.logosQueried = missingLogos.length
+
+    for (const company of missingLogos.slice(0, MAX_LOGOS_PER_RUN)) {
+      try {
+        const result = await researchCompanyDomain(company.name)
+        if (!result) continue
+        await sql`
+          INSERT INTO company_profiles (company_key, company_name, domain, logo_url)
+          VALUES (${company.key}, ${company.name}, ${result.domain}, ${result.logoUrl})
+          ON CONFLICT (company_key) DO NOTHING
+        `
+        summary.logosInserted += 1
+      } catch (err) {
+        if (err instanceof BudgetExceededError) {
+          console.warn("ingest: logo backfill hit the monthly Claude budget, stopping early")
+          break
+        }
+        console.error("ingest: failed to fetch logo for", company.name, err)
+        summary.logosErrors.push({ company: company.name, message: err.message })
       }
     }
 

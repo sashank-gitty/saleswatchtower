@@ -310,13 +310,12 @@ export function PriorityPill({ priority }) {
   )
 }
 
-// Company mark. No logo CDN is reachable from this app and inventing one
-// would mean hotlinking third-party assets, so this derives a stable
-// monogram + hue from the name instead. Same input always yields the same
-// swatch, which is what makes a table scannable.
-// Real logo when one's on file (api/_lib/companyProfile.js), initials
-// otherwise. A failed image load (a domain the logo host can't resolve,
-// a transient network blip) falls back to the initials rather than a
+// Company mark. Real logo when one's on file (api/_lib/companyProfile.js
+// — now covering every account, not just tracked ones, via the light
+// domain-only lookup), a plain neutral monogram otherwise, same tone for
+// every company so colour never has to double as "which one is this."
+// A failed image load (a domain the logo host can't resolve, a
+// transient network blip) falls back to the initials rather than a
 // broken-image icon — same technique AccountDetail.jsx's banner already
 // used for its own, larger logo tile, generalized here so every place an
 // account shows up (table, feed, search, the signal drawer) gets the
@@ -324,22 +323,6 @@ export function PriorityPill({ priority }) {
 export function AccountAvatar({ name, logoUrl = null, size = "md" }) {
   const [imgFailed, setImgFailed] = useState(false)
 
-  const hues = [
-    "bg-brand-500",
-    "bg-sky-500",
-    "bg-emerald-500",
-    "bg-amber-500",
-    "bg-rose-500",
-    "bg-violet-500",
-    "bg-teal-500",
-    "bg-fuchsia-500",
-  ]
-  let hash = 0
-  for (let i = 0; i < name.length; i += 1) {
-    hash = (hash << 5) - hash + name.charCodeAt(i)
-    hash |= 0
-  }
-  const hue = hues[Math.abs(hash) % hues.length]
   const initials = name
     .replace(/[^a-zA-Z0-9 ]/g, "")
     .split(/\s+/)
@@ -374,7 +357,7 @@ export function AccountAvatar({ name, logoUrl = null, size = "md" }) {
   return (
     <span
       aria-hidden="true"
-      className={`inline-flex flex-shrink-0 items-center justify-center font-bold text-white ${hue} ${sizes[size]}`}
+      className={`inline-flex flex-shrink-0 items-center justify-center bg-slate-400 font-bold text-white dark:bg-zinc-600 ${sizes[size]}`}
     >
       {initials || "?"}
     </span>

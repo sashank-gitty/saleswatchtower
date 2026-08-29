@@ -65,13 +65,19 @@ function formatDate(dateString) {
 
 const OPPORTUNITY_GROUPS = new Set(["earnings", "funding", "transformation"])
 
+// Merged from 9 tabs to 4 fixed + up to 3 conditional: Fast Facts and
+// Summary were both "orient me" content (signal timeline/account info
+// alongside key insights/opportunities), so they're one Overview tab
+// now; Custom (discovery questions) and Research (score breakdown) were
+// both "get ready for the call" material, now one Prep tab. Sentiment/
+// Contacts/Tech are filtered out of the visible strip entirely below
+// when there's nothing behind them (see visibleTabs) instead of always
+// showing a tab that says "nothing here."
 const TABS = [
-  { id: "facts", label: "Fast Facts" },
-  { id: "summary", label: "Summary" },
+  { id: "overview", label: "Overview" },
   { id: "signals", label: "Signals" },
   { id: "value", label: "Value" },
-  { id: "custom", label: "Custom" },
-  { id: "research", label: "Research" },
+  { id: "prep", label: "Prep" },
   { id: "sentiment", label: "Sentiment" },
   { id: "contacts", label: "Contacts" },
   { id: "tech", label: "Tech" },
@@ -203,7 +209,7 @@ function TrendStat({ trend }) {
 }
 
 function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, onToggleClaim, sentiment, contacts = [] }) {
-  const [tab, setTab] = useState("summary")
+  const [tab, setTab] = useState("overview")
   const [group, setGroup] = useState("all")
 
   // Citation numbering is assigned once, over the account's signals in
@@ -243,21 +249,20 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
     [account],
   )
 
-  // Nine tabs looks identical until you click into it. A dot marks
-  // whether there's actually something behind each one for this account
-  // right now, so a blind click isn't the only way to find out — Fast
-  // Facts is left unmarked since Account Information always has a real
-  // answer even at zero signals.
-  const hasSignals = (account?.signalCount ?? account?.signals?.length ?? 0) > 0
+  // Overview/Signals/Value/Prep always show, even at zero signals — a
+  // freshly tracked account with nothing yet is a normal state, not one
+  // worth hiding a tab over. Sentiment/Contacts/Tech are different: they
+  // depend on a pipeline that may not be connected for this account at
+  // all, so an empty one is filtered out of the strip entirely below
+  // rather than shown as a tab that says "nothing here" — one fewer
+  // thing to click into and immediately bounce off.
   const tabsWithData = TABS.map((t) => {
-    if (["summary", "signals", "value", "custom", "research"].includes(t.id)) {
-      return { ...t, hasData: hasSignals }
-    }
     if (t.id === "sentiment") return { ...t, hasData: Boolean(sentiment) }
     if (t.id === "contacts") return { ...t, hasData: contacts.length > 0 }
     if (t.id === "tech") return { ...t, hasData: false }
     return t
   })
+  const visibleTabs = tabsWithData.filter((t) => t.hasData !== false)
 
   if (loading) {
     return (
@@ -432,10 +437,10 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
       {account.signals.length > 0 && <AccountChat companyName={account.name} signals={account.signals} />}
 
       <div className="sticky top-14 z-20 -mx-4 mb-5 mt-3 border-b border-slate-200 bg-page/90 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6 dark:border-zinc-800 dark:bg-zinc-950/90">
-        <SubNav tabs={tabsWithData} active={tab} onChange={setTab} />
+        <SubNav tabs={visibleTabs} active={tab} onChange={setTab} />
       </div>
 
-      {tab === "facts" && (
+      {tab === "overview" && (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-5">
             <Card className="p-5">
@@ -512,7 +517,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
         </div>
       )}
 
-      {tab === "summary" && (
+      {tab === "overview" && (
         <>
           <SectionTitle hint="Every line below is grouped from this account's own signals. Click any citation badge to open the source signal.">
             What You Need to Know
@@ -776,7 +781,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
         </Card>
       )}
 
-      {tab === "custom" && (
+      {tab === "prep" && (
         <Card className="overflow-hidden">
           <div className="p-5 pb-3">
             <SectionTitle hint="Generic discovery prompts keyed off the kinds of signal this account's news has actually produced. Identical across accounts by design — the account-specific part is which kinds appear.">
@@ -818,7 +823,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
         </Card>
       )}
 
-      {tab === "research" && (
+      {tab === "prep" && (
         <div className="space-y-5">
           <Card className="p-5">
             <SectionTitle hint="How this account's score was calculated. Shown rather than hidden so a low score can be argued with.">

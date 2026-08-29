@@ -149,8 +149,13 @@ function AccountBlock({ account, signals, companies, onOpenSignal, onToggleRevie
   )
 }
 
-function GlobalFeed({ signals, companies = [], loading, onOpenSignal, onToggleReviewed, onMarkManyReviewed }) {
+function GlobalFeed({ signals, companies = [], logoByKey = new Map(), loading, onOpenSignal, onToggleReviewed, onMarkManyReviewed }) {
   const [search, setSearch] = useState("")
+  // Type, Priority, and the quick-filter chips collapse behind this by
+  // default — search and date range are the two controls worth seeing
+  // on first load, everything else is one click away instead of six
+  // controls competing for attention up front.
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [type, setType] = useState(null)
   const [priority, setPriority] = useState(null)
   // Seeded once from the URL so a deep link (e.g. from a Briefing stat
@@ -175,7 +180,7 @@ function GlobalFeed({ signals, companies = [], loading, onOpenSignal, onToggleRe
 
   const scoped = useMemo(() => signals.filter((s) => withinRange(s, range)), [signals, range])
 
-  const accounts = useMemo(() => deriveAccounts(scoped, companies), [scoped, companies])
+  const accounts = useMemo(() => deriveAccounts(scoped, companies, logoByKey), [scoped, companies, logoByKey])
 
   const filteredAccounts = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -306,56 +311,76 @@ function GlobalFeed({ signals, companies = [], loading, onOpenSignal, onToggleRe
         }
       >
         <Card className="p-3.5">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <SearchInput value={search} onChange={setSearch} placeholder="Search..." className="col-span-2 sm:col-span-1" />
-            <FilterSelect
-              label="Type"
-              value={type}
-              onChange={setType}
-              options={[
-                { value: "customer", label: "Customer" },
-                { value: "prospect", label: "Prospect" },
-                { value: "untracked", label: "Not tracked" },
-              ]}
-            />
-            <FilterSelect
-              label="Priority"
-              value={priority}
-              onChange={setPriority}
-              options={[
-                { value: "p1", label: "P1" },
-                { value: "p2", label: "P2" },
-                { value: "p3", label: "P3" },
-                { value: "none", label: "No Priority" },
-              ]}
-            />
             <FilterSelect label="Date range" value={range} onChange={(v) => setRange(v ?? "30")} options={RANGE_OPTIONS} />
+            <button
+              type="button"
+              onClick={() => setFiltersOpen((v) => !v)}
+              aria-expanded={filtersOpen}
+              className="flex items-center justify-center gap-1.5 rounded-md border border-slate-200 px-3 py-2 text-dense font-semibold text-body-600 transition-colors hover:border-slate-300 hover:text-ink-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:text-zinc-100"
+            >
+              Filters
+              {(type || priority || anyQuickFilterActive) && (
+                <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-100 px-1 text-3xs font-bold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
+                  {[type, priority, unreviewedOnly, highRelevanceOnly, matchedOnly].filter(Boolean).length}
+                </span>
+              )}
+              <ChevronDownIcon className={`h-3.5 w-3.5 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
+            </button>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-3 dark:border-zinc-800/70">
-            <QuickFilterChip active={unreviewedOnly} onClick={() => setUnreviewedOnly((v) => !v)}>
-              Unreviewed only
-            </QuickFilterChip>
-            <QuickFilterChip active={highRelevanceOnly} onClick={() => setHighRelevanceOnly((v) => !v)}>
-              High relevance only
-            </QuickFilterChip>
-            <QuickFilterChip active={matchedOnly} onClick={() => setMatchedOnly((v) => !v)}>
-              Account-matched only
-            </QuickFilterChip>
-            {anyQuickFilterActive && (
-              <button
-                type="button"
-                onClick={() => {
-                  setUnreviewedOnly(false)
-                  setHighRelevanceOnly(false)
-                  setMatchedOnly(false)
-                }}
-                className="text-xs font-medium text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-200"
-              >
-                Clear quick filters
-              </button>
-            )}
-          </div>
+          {filtersOpen && (
+            <div className="mt-3 space-y-3 border-t border-slate-100 pt-3 dark:border-zinc-800/70">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                <FilterSelect
+                  label="Type"
+                  value={type}
+                  onChange={setType}
+                  options={[
+                    { value: "customer", label: "Customer" },
+                    { value: "prospect", label: "Prospect" },
+                    { value: "untracked", label: "Not tracked" },
+                  ]}
+                />
+                <FilterSelect
+                  label="Priority"
+                  value={priority}
+                  onChange={setPriority}
+                  options={[
+                    { value: "p1", label: "P1" },
+                    { value: "p2", label: "P2" },
+                    { value: "p3", label: "P3" },
+                    { value: "none", label: "No Priority" },
+                  ]}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <QuickFilterChip active={unreviewedOnly} onClick={() => setUnreviewedOnly((v) => !v)}>
+                  Unreviewed only
+                </QuickFilterChip>
+                <QuickFilterChip active={highRelevanceOnly} onClick={() => setHighRelevanceOnly((v) => !v)}>
+                  High relevance only
+                </QuickFilterChip>
+                <QuickFilterChip active={matchedOnly} onClick={() => setMatchedOnly((v) => !v)}>
+                  Account-matched only
+                </QuickFilterChip>
+                {anyQuickFilterActive && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUnreviewedOnly(false)
+                      setHighRelevanceOnly(false)
+                      setMatchedOnly(false)
+                    }}
+                    className="text-xs font-medium text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-200"
+                  >
+                    Clear quick filters
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </Card>
       </PageHeader>
 

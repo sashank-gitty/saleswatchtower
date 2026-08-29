@@ -111,7 +111,7 @@ function CreateAlertModal({ open, onClose, onCreate, query, days, group }) {
   )
 }
 
-function Search({ signals, companies = [], onOpenSignal }) {
+function Search({ signals, companies = [], logoByKey = new Map(), onOpenSignal }) {
   const [query, setQuery] = useState("")
   const [group, setGroup] = useState("all")
   const [days, setDays] = useState("180")
@@ -127,7 +127,7 @@ function Search({ signals, companies = [], onOpenSignal }) {
   // tracked company regardless of signal count (see accountModel.js), so
   // this is a real, complete list to match names against, not a
   // best-effort subset.
-  const accounts = useMemo(() => deriveAccounts(signals, companies), [signals, companies])
+  const accounts = useMemo(() => deriveAccounts(signals, companies, logoByKey), [signals, companies, logoByKey])
   const matchedAccounts = useMemo(() => {
     const needle = query.trim()
     if (!needle) return []

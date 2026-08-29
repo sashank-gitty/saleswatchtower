@@ -21,6 +21,7 @@ import { useCompanies } from "./lib/useCompanies.js"
 import { useSentiment } from "./lib/useSentiment.js"
 import { useMarketData } from "./lib/useMarketData.js"
 import { useContacts } from "./lib/useContacts.js"
+import { useCompanyLogos } from "./lib/useCompanyLogos.js"
 import { Button } from "./components/ui.jsx"
 
 function App() {
@@ -119,7 +120,12 @@ function App() {
   const { sentimentFor } = useSentiment()
   const { marketDataFor } = useMarketData()
   const { contactsFor } = useContacts()
-  const accounts = useMemo(() => deriveAccounts(signals, companies), [signals, companies])
+  const { logos } = useCompanyLogos()
+  // Every account's logo, tracked or not (api/company-logos.js) — a
+  // separate lookup from `companies` (tracked_companies only) since a
+  // logo now exists for far more accounts than the tracked list covers.
+  const logoByKey = useMemo(() => new Map(logos.map((l) => [l.companyKey, l.logoUrl])), [logos])
+  const accounts = useMemo(() => deriveAccounts(signals, companies, logoByKey), [signals, companies, logoByKey])
 
   const openItem = useMemo(() => signals.find((s) => s.id === openSignalId) ?? null, [signals, openSignalId])
   // Same-entity signals are the strongest "related" match — same company,
@@ -241,6 +247,7 @@ function App() {
           <Briefing
             signals={signals}
             companies={companies}
+            accounts={accounts}
             loading={loading}
             onOpenSignal={openSignal}
             onToggleReviewed={handleToggleReviewed}
@@ -249,13 +256,21 @@ function App() {
         )}
 
         {route.page === "radar" && (
-          <Radar signals={signals} companies={companies} syncStatus={syncStatus} onOpenSignal={openSignal} loading={loading} />
+          <Radar
+            signals={signals}
+            companies={companies}
+            logoByKey={logoByKey}
+            syncStatus={syncStatus}
+            onOpenSignal={openSignal}
+            loading={loading}
+          />
         )}
 
         {route.page === "feed" && (
           <GlobalFeed
             signals={signals}
             companies={companies}
+            logoByKey={logoByKey}
             loading={loading}
             onOpenSignal={openSignal}
             onToggleReviewed={handleToggleReviewed}
@@ -277,6 +292,7 @@ function App() {
           <Accounts
             signals={signals}
             companies={companies}
+            logoByKey={logoByKey}
             loading={loading}
             isClaimed={isTracked}
             onToggleClaim={setCompany}
@@ -305,6 +321,7 @@ function App() {
           <Accounts
             signals={signals}
             companies={companies}
+            logoByKey={logoByKey}
             loading={loading}
             isClaimed={isTracked}
             onToggleClaim={setCompany}
@@ -312,7 +329,9 @@ function App() {
           />
         )}
 
-        {route.page === "search" && <SearchPage signals={signals} companies={companies} onOpenSignal={openSignal} />}
+        {route.page === "search" && (
+          <SearchPage signals={signals} companies={companies} logoByKey={logoByKey} onOpenSignal={openSignal} />
+        )}
 
         {route.page === "alerts" && <Alerts signals={signals} onOpenSignal={openSignal} />}
 
