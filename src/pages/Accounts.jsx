@@ -244,7 +244,7 @@ function Accounts({ signals, companies = [], loading, isClaimed, onToggleClaim, 
         isClaimed={isClaimed}
         onToggleClaim={onToggleClaim}
         columnsStorageKey={type === "mine" ? "sdr-dashboard-my-account-columns" : "sdr-dashboard-account-columns"}
-        defaultColumns={type === "mine" ? ["type", "signals", "priority", "claimed"] : undefined}
+        defaultColumns={type === "mine" ? ["whyNow", "type", "signals", "priority", "claimed"] : undefined}
         showClaimedColumn={type === "mine"}
         defaultSort={type === "mine" ? { key: "claimed", dir: "desc" } : undefined}
         emptyTitle={type === "mine" && companies.length === 0 ? "No companies tracked yet" : undefined}

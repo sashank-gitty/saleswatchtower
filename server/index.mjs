@@ -142,7 +142,7 @@ async function readBody(req) {
 // (no api/territory.js exists, a stale entry from before tracked_companies
 // replaced it), "companies" and "sentiment" added (both real routes that
 // were missing here, silently 404ing under self-hosting only).
-const ROUTES = new Set(["signals", "reviews", "ingest", "ingest-status", "companies", "sentiment", "company-profile"])
+const ROUTES = new Set(["signals", "reviews", "ingest", "ingest-status", "companies", "sentiment", "company-profile", "account-chat"])
 const handlerCache = new Map()
 
 async function loadHandler(name) {

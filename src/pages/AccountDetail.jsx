@@ -23,6 +23,7 @@ import {
 } from "../lib/accountBrief.js"
 import { accountImpact, outreachAngles } from "../lib/signalInsights.js"
 import { Citations } from "../components/Citation.jsx"
+import AccountChat from "../components/AccountChat.jsx"
 import {
   Card,
   Button,
@@ -50,6 +51,8 @@ import {
   PinIcon,
   ScaleIcon,
   QuoteIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
 } from "../components/icons.jsx"
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -141,6 +144,61 @@ function InfoRow({ icon: Icon, label, value }) {
       <span className="text-dense text-body-500 dark:text-zinc-400">{label}</span>
       <span className="ml-auto text-right text-dense font-semibold text-ink-900 dark:text-zinc-100">{value}</span>
     </div>
+  )
+}
+
+// A tiny inline sparkline, same path-building technique as
+// VolumeChart.jsx (this app has no charting library and stays that
+// way) at a fraction of the size — no gridlines, no axis labels, just
+// the shape of 8 weeks of signal volume next to the "up/down/flat" stat
+// it accompanies.
+function TrendSparkline({ weeklyCounts, direction }) {
+  const width = 72
+  const height = 22
+  const max = Math.max(...weeklyCounts, 1)
+  const stepX = width / Math.max(weeklyCounts.length - 1, 1)
+  const path = weeklyCounts
+    .map((v, i) => `${i === 0 ? "M" : "L"}${(i * stepX).toFixed(2)},${(height - (v / max) * height).toFixed(2)}`)
+    .join(" ")
+
+  const strokeClass =
+    direction === "up"
+      ? "stroke-emerald-500"
+      : direction === "down"
+        ? "stroke-rose-500"
+        : "stroke-slate-400 dark:stroke-zinc-500"
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-label="Signal volume, last 8 weeks">
+      <path d={path} fill="none" className={strokeClass} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+    </svg>
+  )
+}
+
+// "+40% this month" / "cooling off" — the trend stat that sits beside
+// the sparkline above. changePct is null for a brand-new account (no
+// prior-period signals to compare against) or a long-dormant one; both
+// get a plain word instead of a fabricated percentage.
+function TrendStat({ trend }) {
+  if (trend.direction === "new") {
+    return <span className="text-2xs font-semibold text-emerald-600 dark:text-emerald-400">New activity</span>
+  }
+  if (trend.changePct === null) {
+    return <span className="text-2xs font-medium text-slate-400 dark:text-zinc-500">No recent activity</span>
+  }
+  const Icon = trend.direction === "up" ? ArrowUpIcon : trend.direction === "down" ? ArrowDownIcon : null
+  const toneClass =
+    trend.direction === "up"
+      ? "text-emerald-600 dark:text-emerald-400"
+      : trend.direction === "down"
+        ? "text-rose-600 dark:text-rose-400"
+        : "text-slate-500 dark:text-zinc-400"
+  return (
+    <span className={`inline-flex items-center gap-0.5 text-2xs font-semibold tabular-nums ${toneClass}`}>
+      {Icon && <Icon className="h-3 w-3" />}
+      {trend.changePct > 0 ? "+" : ""}
+      {trend.changePct}% this month
+    </span>
   )
 }
 
@@ -350,6 +408,12 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
           </div>
         </Card>
       ) : null}
+
+      {/* Persistently visible regardless of which tab is open below —
+          matches how Gong/Nooks keep their account chat reachable at
+          all times rather than buried in a sub-tab. Only shown once
+          there's something to ground an answer in. */}
+      {account.signals.length > 0 && <AccountChat companyName={account.name} signals={account.signals} />}
 
       <div className="sticky top-14 z-20 -mx-4 mb-5 mt-3 border-b border-slate-200 bg-page/90 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6 dark:border-zinc-800 dark:bg-zinc-950/90">
         <SubNav tabs={TABS} active={tab} onChange={setTab} />
@@ -744,7 +808,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
             <SectionTitle hint="How this account's score was calculated. Shown rather than hidden so a low score can be argued with.">
               Score Breakdown
             </SectionTitle>
-            <div className="mb-4 flex items-center gap-3">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
               <ScoreBadge score={account.score} size="lg" />
               <div>
                 <p className="text-dense font-medium text-ink-900 dark:text-zinc-100">
@@ -753,6 +817,10 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                 <p className="text-xs text-body-500 dark:text-zinc-400">
                   Weighted: relevance 55%, recency 30%, volume 15%
                 </p>
+              </div>
+              <div className="ml-auto flex items-center gap-2.5">
+                <TrendSparkline weeklyCounts={account.trend.weeklyCounts} direction={account.trend.direction} />
+                <TrendStat trend={account.trend} />
               </div>
             </div>
             <div className="space-y-2.5">
@@ -775,6 +843,41 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                 </div>
               ))}
             </div>
+
+            {(account.reasons.elevators.length > 0 || account.reasons.reductors.length > 0) && (
+              <div className="mt-5 grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-2 dark:border-zinc-800">
+                {account.reasons.elevators.length > 0 && (
+                  <div>
+                    <p className="mb-1.5 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                      <ArrowUpIcon className="h-3 w-3" />
+                      Elevators
+                    </p>
+                    <ul className="space-y-1">
+                      {account.reasons.elevators.map((line) => (
+                        <li key={line} className="text-xs leading-relaxed text-body-600 dark:text-zinc-300">
+                          {line}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {account.reasons.reductors.length > 0 && (
+                  <div>
+                    <p className="mb-1.5 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                      <ArrowDownIcon className="h-3 w-3" />
+                      Reductors
+                    </p>
+                    <ul className="space-y-1">
+                      {account.reasons.reductors.map((line) => (
+                        <li key={line} className="text-xs leading-relaxed text-body-600 dark:text-zinc-300">
+                          {line}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
           </Card>
 
           <Card className="p-5">

@@ -11,6 +11,9 @@
     },
     "api/company-profile.js": {
       "maxDuration": 60
+    },
+    "api/account-chat.js": {
+      "maxDuration": 30
     }
   },
   "rewrites": [

@@ -1,5 +1,5 @@
 import { groupForSignal, groupLabel } from "./signalGroups.js"
-import { HIGH_RELEVANCE_THRESHOLD } from "./relevance.js"
+import { HIGH_RELEVANCE_THRESHOLD, REGULATORY_SIGNAL_TYPES } from "./relevance.js"
 import { companyKey } from "../../shared/companyKey.js"
 
 // The account layer.
@@ -134,6 +134,110 @@ function capitalize(value) {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
 
+// "3 days ago" / "today" / "2 months ago" — deliberately its own small
+// helper rather than reusing Radar.jsx's relativeHours or
+// SyncStatus.jsx's formatRelativeTime: both of those are built for a
+// "how fresh is the sync" reading (hours matter), this one reads in
+// days/weeks/months since it's describing a signal that could be months
+// old. Not worth generalizing a third pattern into one shared function
+// for a one-line difference in granularity.
+function relativeDays(dateString, now) {
+  const days = Math.floor((now - parseDate(dateString).getTime()) / DAY_MS)
+  if (days <= 0) return "today"
+  if (days === 1) return "yesterday"
+  if (days < 30) return `${days} days ago`
+  if (days < 60) return "about a month ago"
+  if (days < 365) return `${Math.floor(days / 30)} months ago`
+  return `${Math.floor(days / 365)}+ years ago`
+}
+
+// The single most relevant, most recent signal — deliberately just one,
+// not a synthesis of several. This is the terse "why now" line: a
+// glanceable reason to look, not a summary. rollupSentence() (above)
+// already covers "give me the fuller category breakdown" and is meant
+// to sit behind a hover hint next to this, not be replaced by it.
+export function whyNowLine(signals, now = Date.now()) {
+  if (!signals.length) return "No signals yet"
+
+  const best = [...signals].sort((a, b) => {
+    const relevanceDiff = (b.outreachRelevance ?? 3) - (a.outreachRelevance ?? 3)
+    if (relevanceDiff !== 0) return relevanceDiff
+    return a.date < b.date ? 1 : -1
+  })[0]
+
+  const label = groupLabel(groupForSignal(best))
+  return `${label} · ${relativeDays(best.date, now)}`
+}
+
+// Turns the three score components into up to 3 concrete "elevators"
+// (real reasons this account is worth acting on) and up to 2 "reductors"
+// (real reasons to hesitate) — plain-English, not a repeat of the raw
+// percentages already shown next to this. Every line traces back to a
+// real signal or a real, checkable fact about this account; nothing is
+// templated to fill a slot that has nothing behind it — an account with
+// no genuine reductor shows none, rather than a manufactured one.
+export function scoreReasons(signals, breakdown, now = Date.now()) {
+  const elevators = [...signals]
+    .filter((s) => (s.outreachRelevance ?? 0) >= HIGH_RELEVANCE_THRESHOLD)
+    .sort((a, b) => (b.outreachRelevance ?? 0) - (a.outreachRelevance ?? 0) || (a.date < b.date ? 1 : -1))
+    .slice(0, 3)
+    .map((s) => `${groupLabel(groupForSignal(s))} — ${s.headline}`)
+
+  const reductorSignals = [...signals]
+    .filter((s) => REGULATORY_SIGNAL_TYPES.has(s.signalType))
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .slice(0, 2)
+    .map((s) => `${groupLabel(groupForSignal(s))} — ${s.headline}`)
+
+  const reductors = [...reductorSignals]
+
+  // Only added when there's room left and the fact is real — never pads
+  // reductors past 2 total, and never states staleness/thinness for an
+  // account that isn't actually stale/thin.
+  if (reductors.length < 2 && breakdown.recency < 0.3 && signals.length) {
+    const newest = signals.reduce((latest, s) => (s.date > latest ? s.date : latest), signals[0].date)
+    reductors.push(`No new signals in ${relativeDays(newest, now)}`)
+  }
+  if (reductors.length < 2 && breakdown.volume < 0.2) {
+    reductors.push(signals.length === 1 ? "Only 1 signal on record" : `Only ${signals.length} signals on record`)
+  }
+
+  return { elevators, reductors: reductors.slice(0, 2) }
+}
+
+// Weekly signal counts over the last 8 weeks, plus the % change between
+// the last 30 days and the 30 days before that — "is this account
+// heating up or cooling off," not just "how many signals." `changePct`
+// is null when the prior period had zero signals (a percentage off a
+// zero base is meaningless, not just large) — direction "new" covers
+// that case instead of a nonsensical +Infinity%.
+export function signalTrend(signals, now = Date.now()) {
+  const WEEK_MS = 7 * DAY_MS
+  const weeklyCounts = Array(8).fill(0)
+  for (const signal of signals) {
+    const ageMs = now - parseDate(signal.date).getTime()
+    const weekIndex = 7 - Math.floor(ageMs / WEEK_MS)
+    if (weekIndex >= 0 && weekIndex < 8) weeklyCounts[weekIndex] += 1
+  }
+
+  const THIRTY_DAYS_MS = 30 * DAY_MS
+  let last30 = 0
+  let prior30 = 0
+  for (const signal of signals) {
+    const ageMs = now - parseDate(signal.date).getTime()
+    if (ageMs < THIRTY_DAYS_MS) last30 += 1
+    else if (ageMs < THIRTY_DAYS_MS * 2) prior30 += 1
+  }
+
+  if (prior30 === 0) {
+    return { weeklyCounts, changePct: null, direction: last30 > 0 ? "new" : "flat" }
+  }
+
+  const changePct = Math.round(((last30 - prior30) / prior30) * 100)
+  const direction = changePct > 5 ? "up" : changePct < -5 ? "down" : "flat"
+  return { weeklyCounts, changePct, direction }
+}
+
 // Builds the full account list from a signal array plus your tracked
 // companies. `companies` is the array from useCompanies() — used to know
 // which matched names are competitors (excluded here, see
@@ -222,6 +326,9 @@ export function deriveAccounts(signals, companies = [], now = Date.now()) {
         scoreBreakdown: breakdown,
         priority: priorityFor(breakdown.score),
         rollup: rollupSentence(sorted),
+        reasons: scoreReasons(sorted, breakdown, now),
+        trend: signalTrend(sorted, now),
+        whyNow: whyNowLine(sorted, now),
       }
     })
     .sort((a, b) => b.score - a.score || b.signalCount - a.signalCount)

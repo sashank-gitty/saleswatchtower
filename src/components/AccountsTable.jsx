@@ -24,6 +24,7 @@ function formatDateTime(isoString) {
 // listed as always-available.
 const BASE_COLUMNS = [
   { id: "name", label: "Name", always: true },
+  { id: "whyNow", label: "Why Now" },
   { id: "type", label: "Type" },
   { id: "signals", label: "Signals" },
   { id: "priority", label: "Priority" },
@@ -98,7 +99,7 @@ function AccountsTable({
   claimedAt,
   onToggleClaim,
   columnsStorageKey,
-  defaultColumns = ["type", "signals", "priority", "lastSignal"],
+  defaultColumns = ["whyNow", "type", "signals", "priority", "lastSignal"],
   showClaimedColumn = false,
   defaultSort = { key: "score", dir: "desc" },
   emptyTitle = "No accounts match these filters",
@@ -179,6 +180,7 @@ function AccountsTable({
             <thead className="border-b border-slate-200 bg-section text-2xs uppercase tracking-wider text-slate-500 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400">
               <tr>
                 <SortHeader id="name" label="Name" className="pl-4" />
+                {shows("whyNow") && <SortHeader id="whyNow" label="Why Now" />}
                 {shows("type") && <SortHeader id="type" label="Type" />}
                 {shows("signals") && <SortHeader id="signals" label="Signals" />}
                 {shows("priority") && <SortHeader id="priority" label="Priority" />}
@@ -208,6 +210,11 @@ function AccountsTable({
                       )}
                     </a>
                   </td>
+                  {shows("whyNow") && (
+                    <td className="max-w-[220px] truncate px-3 py-2 text-body-600 dark:text-zinc-300" title={account.rollup}>
+                      {account.whyNow}
+                    </td>
+                  )}
                   {shows("type") && (
                     <td className="px-3 py-2">
                       {account.status ? (

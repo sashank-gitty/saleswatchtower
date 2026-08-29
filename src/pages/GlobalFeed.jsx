@@ -101,6 +101,13 @@ function AccountBlock({ account, signals, onOpenSignal, onToggleReviewed }) {
             )}
             {!account.managed && <Pill tone="slate">Not tracked</Pill>}
           </div>
+          {/* The terse per-account reason to look, not the fuller
+              category tally — that's one hover away via the title
+              attribute, same "detail on demand" pattern SectionTitle's
+              hint icon already uses elsewhere in this app. */}
+          <p className="mt-0.5 truncate text-xs text-body-500 dark:text-zinc-400" title={account.rollup}>
+            {account.whyNow}
+          </p>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
           <ScoreBadge score={account.score} size="sm" />
