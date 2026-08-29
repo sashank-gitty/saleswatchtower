@@ -105,3 +105,60 @@ write them as `origin: 'community'` rows in the database.
 launchctl unload ~/Library/LaunchAgents/com.sdrdashboard.last30days-sync.plist
 rm ~/Library/LaunchAgents/com.sdrdashboard.last30days-sync.plist
 ```
+
+---
+
+## Local hiring-signal sync (a second, separate script)
+
+Same shape as the last30days sync above — `sync-hiring-signals.mjs`,
+`hiring-signal-prompt.mjs`, `db/push-hiring-signals.mjs`, and
+`com.sdrdashboard.hiring-signal-sync.plist.template` — but researches real
+hiring/team-growth signals per tracked company instead of general news,
+and writes `origin: 'hiring_signal'` rows instead of `'community'`.
+
+**Why this is a local script and not a cloud one:** it started life as a
+Claude Code scheduled cloud routine (no laptop required), and that was
+genuinely tried — created, run, and tested with two different tools
+(`curl` and `WebFetch`) trying to reach this app's API. Both got an
+identical `EGRESS_BLOCKED` denial: the cloud sandbox only allows outbound
+connections to a fixed allowlist of known infrastructure (Anthropic's own
+services, package registries, GitHub), and there's no setting to add a
+personal Vercel deployment to that list. Research tools (WebSearch,
+connected MCP services like ZoomInfo/Lusha) work fine from a cloud
+routine; reaching back into this app at all does not, for reading tracked
+companies or writing results. A local script has ordinary internet access
+and no such wall, so that's where this lives instead.
+
+One real difference from that abandoned cloud version: this script's
+research pass uses WebSearch (and the `agent-reach` skill, if your local
+Claude Code has it) only. It does **not** use ZoomInfo/Lusha's real data —
+those were only reachable as MCP connections inside a Claude session
+(cloud routine or a chat like this one), not from a headless `claude -p`
+subprocess, unless you've separately added them as local MCP servers
+(`claude mcp add`, out of scope of this script). If you want ZoomInfo/Lusha
+data in the automatic nightly pipeline instead, that needs a direct API
+integration with your own ZoomInfo/Lusha API key — a separate piece, not
+built by this script.
+
+Setup, prerequisites, and known limitations are otherwise identical to the
+last30days sync above (same `claude` CLI / launchd requirements, same
+"only runs while your laptop is on" caveat, same "verify `--allowedTools`
+against your installed CLI" caveat) — swap the filenames:
+
+```bash
+node --env-file=.env.local scripts/local/sync-hiring-signals.mjs
+```
+
+```bash
+cp scripts/local/com.sdrdashboard.hiring-signal-sync.plist.template \
+   ~/Library/LaunchAgents/com.sdrdashboard.hiring-signal-sync.plist
+# edit the copy, replace every REPLACE_ME_*, then:
+launchctl load ~/Library/LaunchAgents/com.sdrdashboard.hiring-signal-sync.plist
+```
+
+Uninstall the same way:
+
+```bash
+launchctl unload ~/Library/LaunchAgents/com.sdrdashboard.hiring-signal-sync.plist
+rm ~/Library/LaunchAgents/com.sdrdashboard.hiring-signal-sync.plist
+```

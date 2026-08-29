@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Template — copy to ~/Library/LaunchAgents/com.sdrdashboard.hiring-signal-sync.plist
+  and replace every REPLACE_ME before loading. See scripts/local/README.md.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sdrdashboard.hiring-signal-sync</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>REPLACE_ME_NODE_PATH</string>
+        <!-- e.g. /usr/local/bin/node or /opt/homebrew/bin/node — run `which node` to find yours -->
+        <string>REPLACE_ME_REPO_PATH/scripts/local/sync-hiring-signals.mjs</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>DATABASE_URL</key>
+        <string>REPLACE_ME_DATABASE_URL</string>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:REPLACE_ME_CLAUDE_CLI_DIR</string>
+        <!-- claude must be resolvable on this PATH — launchd does not read your shell's PATH -->
+    </dict>
+
+    <!--
+      Fires weekly, Monday at 09:00 local time — a real research pass per
+      company costs real Claude usage, so this runs far less often than
+      the daily news ingest. Change MAX_COMPANIES_PER_RUN (default 5, set
+      it as another EnvironmentVariables entry above) or this Weekday if
+      you want a different cadence.
+    -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>1</integer>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>REPLACE_ME_HOME/Library/Logs/sdr-dashboard-hiring-signal.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>REPLACE_ME_HOME/Library/Logs/sdr-dashboard-hiring-signal-error.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

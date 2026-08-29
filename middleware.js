@@ -16,24 +16,20 @@
 // outcome than one that is silently wide open.
 
 export const config = {
-  // Everything except entry points that authenticate themselves with
-  // their own Bearer token instead of this Basic auth: /api/ingest
-  // (CRON_SECRET, sent by Vercel Cron) and /api/ingest-hiring-signal
-  // (HIRING_SIGNAL_SECRET, sent by the hiring-signal scheduled cloud
-  // routine — see that file for why it can't use Basic auth here: it has
-  // no way to hold this app's DASHBOARD_PASSWORD any more safely than its
-  // own narrowly-scoped secret). Running Basic auth in front of either
-  // would reject their Bearer header before the route ever saw it.
+  // Everything except the cron entry point. /api/ingest authenticates
+  // itself with CRON_SECRET (a Bearer token Vercel Cron sends), and
+  // running Basic auth in front of it would reject that header before
+  // the route ever saw it.
   //
   // This is a prefix match, not an exact one — (?!api/ingest) excludes
   // any path starting with those literal characters, not just that exact
   // path. That's why /api/ingest-status has always been reachable without
-  // the dashboard password too (verified against production while adding
-  // the line below): it shares the "api/ingest" prefix. Not something
-  // this change introduces, just worth knowing before touching this file
-  // again — an anchored version would silently change that route's
-  // exposure.
-  matcher: ["/((?!api/ingest|api/ingest-hiring-signal).*)"],
+  // the dashboard password too (verified against production while
+  // investigating a since-abandoned hiring-signal cloud routine): it
+  // shares the "api/ingest" prefix. Worth knowing before adding a new
+  // "api/ingest*"-named route here — an anchored version would silently
+  // change that route's exposure.
+  matcher: ["/((?!api/ingest).*)"],
 }
 
 // Length-independent, constant-time-ish comparison. The edge runtime has
@@ -67,7 +63,7 @@ export default function middleware(request) {
   // silently stops and the feed just goes quiet. So check the path here
   // too rather than depending on matcher semantics alone.
   const { pathname } = new URL(request.url)
-  if (pathname === "/api/ingest" || pathname === "/api/ingest-hiring-signal") return undefined
+  if (pathname === "/api/ingest") return undefined
 
   const expectedPassword = process.env.DASHBOARD_PASSWORD
   const expectedUser = process.env.DASHBOARD_USER || "sdr"
