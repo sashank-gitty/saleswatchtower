@@ -95,12 +95,12 @@ function AddCompanyModal({ open, onClose, onAdd }) {
         </Field>
         <Field
           label="Stock ticker (optional)"
-          hint="Only if this company is publicly listed anywhere — pulls a real stock price, market cap, and next earnings date. Use the exact symbol format Finnhub expects: the bare US ticker for a US-listed company (e.g. CVX for Chevron), or with an exchange suffix for others (e.g. NAB.AX for an ASX-listed company — note this is different from the ASX ticker above, which wants the bare code)."
+          hint="Confirmed working for US-listed companies (e.g. CVX for Chevron) — pulls a real stock price, market cap, and next earnings date. Confirmed NOT working for ASX-listed companies (Finnhub's free tier returns an access error for those) — use the ASX ticker field above instead for an ASX-listed company's real filings."
         >
           <TextInput
             value={stockTicker}
             onChange={(e) => setStockTicker(e.target.value)}
-            placeholder="e.g. CVX or NAB.AX"
+            placeholder="e.g. CVX"
           />
         </Field>
         <Field label="Why you're tracking this (optional)">

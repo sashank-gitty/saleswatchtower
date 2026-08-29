@@ -10,10 +10,13 @@
 // LLM involved, so no budget check and no timeout risk the way
 // companyProfile.js's web-search-driven calls had.
 //
-// Honest caveat, not yet verified against a real non-US ticker: Finnhub's
-// free tier is documented as strongest for real-time US-listed data;
-// coverage for other exchanges (ASX included) may be thinner or delayed.
-// Worth confirming directly per-exchange rather than assumed.
+// Confirmed directly, not just documented: US tickers (tested CVX,
+// TENB) return real data on the free tier. ASX tickers (tested NAB.AX)
+// come back 403 — Finnhub's free tier genuinely does not cover the ASX,
+// not just "thinner data." Handled the same as any other per-company
+// failure below (caught, logged, doesn't sink the run) — for ASX-listed
+// companies, fetchAsxFilings.js's real filings remain the only working
+// market-context source in this app.
 const BASE_URL = "https://finnhub.io/api/v1"
 
 async function finnhubGet(path, params) {
