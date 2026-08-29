@@ -225,7 +225,25 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
           likes (it only renders once, at the top) while the rail that
           actually has to stay put while you scroll stays quiet and thin. */}
       <GradientBanner
-        tile={initialsFor(account.name)}
+        tile={
+          account.logoUrl ? (
+            <img
+              src={account.logoUrl}
+              alt=""
+              className="h-full w-full rounded-xl object-contain p-1.5"
+              // A logo that fails to load (a domain unavatar.io can't
+              // resolve, a transient network blip) falls back to the
+              // initials tile rather than a broken-image icon — done by
+              // hiding the <img> itself, so the parent's white tile
+              // background still shows through underneath.
+              onError={(e) => {
+                e.currentTarget.style.display = "none"
+              }}
+            />
+          ) : (
+            initialsFor(account.name)
+          )
+        }
         title={account.name}
         subtitle={account.managed ? (account.status ? `${account.status[0].toUpperCase()}${account.status.slice(1)}` : "Tracked") : "Not tracked"}
         aside={
@@ -271,6 +289,67 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
           </Button>
         </div>
       </div>
+
+      {/* Company snapshot — real firmographics from api/_lib/companyProfile.js,
+          shown right after the banner rather than in a tab, so it's the
+          first thing you see when you open an account, not something you
+          have to go find. Renders nothing at all when there's no profile
+          yet (not tracked, or research hasn't landed) — no placeholder
+          clutter for a fact that just isn't available. */}
+      {account.industry || account.description || account.headquarters || account.employeeCount ? (
+        <Card className="mb-5 p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <SectionTitle>Company Snapshot</SectionTitle>
+            {account.industry && <Pill tone="brand">{account.industry}</Pill>}
+          </div>
+
+          {account.description && (
+            <p className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">{account.description}</p>
+          )}
+          {account.businessModel && (
+            <p className="mt-2 text-xs leading-relaxed text-body-500 dark:text-zinc-400">
+              <span className="font-semibold">How they make money:</span> {account.businessModel}
+            </p>
+          )}
+
+          {account.offerings?.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {account.offerings.map((offering) => (
+                <Pill key={offering} tone="slate">
+                  {offering}
+                </Pill>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-4 grid grid-cols-1 gap-x-6 divide-y divide-slate-100 border-t border-slate-100 sm:grid-cols-2 sm:divide-y-0 dark:divide-zinc-800 dark:border-zinc-800">
+            {account.headquarters && <InfoRow icon={MapPinIcon} label="Headquarters" value={account.headquarters} />}
+            {(account.employeeCount || account.employeeGrowth) && (
+              <InfoRow
+                icon={UsersIcon}
+                label="Employees"
+                value={[account.employeeCount, account.employeeGrowth].filter(Boolean).join(" · ")}
+              />
+            )}
+            {account.foundedYear && <InfoRow icon={BuildingIcon} label="Founded" value={account.foundedYear} />}
+            {account.domain && (
+              <InfoRow
+                label="Website"
+                value={
+                  <a
+                    href={`https://${account.domain}`}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="text-brand-600 hover:underline dark:text-brand-400"
+                  >
+                    {account.domain}
+                  </a>
+                }
+              />
+            )}
+          </div>
+        </Card>
+      ) : null}
 
       <div className="sticky top-14 z-20 -mx-4 mb-5 mt-3 border-b border-slate-200 bg-page/90 px-4 py-2 backdrop-blur-md sm:-mx-6 sm:px-6 dark:border-zinc-800 dark:bg-zinc-950/90">
         <SubNav tabs={TABS} active={tab} onChange={setTab} />

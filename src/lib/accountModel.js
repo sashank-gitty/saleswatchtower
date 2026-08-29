@@ -188,6 +188,20 @@ export function deriveAccounts(signals, companies = [], now = Date.now()) {
         status: tracked?.status ?? (account.tracked ? "prospect" : null),
         note: tracked?.note ?? null,
         managed: account.tracked,
+        // Company-snapshot fields (api/_lib/companyProfile.js) — only a
+        // tracked company can have one, since that's the only time it
+        // gets fetched. Untracked/derived accounts carry nulls, same as
+        // status/note above.
+        logoUrl: tracked?.logoUrl ?? null,
+        domain: tracked?.domain ?? null,
+        industry: tracked?.industry ?? null,
+        description: tracked?.description ?? null,
+        businessModel: tracked?.businessModel ?? null,
+        offerings: tracked?.offerings ?? [],
+        headquarters: tracked?.headquarters ?? null,
+        employeeCount: tracked?.employeeCount ?? null,
+        employeeGrowth: tracked?.employeeGrowth ?? null,
+        foundedYear: tracked?.foundedYear ?? null,
         firstSeen: sorted[sorted.length - 1]?.date ?? null,
         lastSignalDate: sorted[0]?.date ?? null,
         score: breakdown.score,

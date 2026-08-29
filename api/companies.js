@@ -1,4 +1,6 @@
 import { sql } from "./_lib/db.js"
+import { researchCompanyProfile } from "./_lib/companyProfile.js"
+import { BudgetExceededError } from "./_lib/normalize.js"
 
 // The tracked-companies list — the single thing this app asks you to set
 // up. GET lists every company you're watching; POST adds or updates one;
@@ -8,9 +10,13 @@ export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
       const rows = await sql`
-        SELECT company_key, company_name, status, is_competitor, note, asx_ticker, created_at
-        FROM tracked_companies
-        ORDER BY created_at DESC
+        SELECT
+          tc.company_key, tc.company_name, tc.status, tc.is_competitor, tc.note, tc.asx_ticker, tc.created_at,
+          cp.domain, cp.logo_url, cp.industry, cp.description, cp.business_model, cp.offerings,
+          cp.headquarters, cp.employee_count, cp.employee_growth, cp.founded_year, cp.updated_at AS profile_updated_at
+        FROM tracked_companies tc
+        LEFT JOIN company_profiles cp ON cp.company_key = tc.company_key
+        ORDER BY tc.created_at DESC
       `
       res.status(200).json(
         rows.map((row) => ({
@@ -21,6 +27,17 @@ export default async function handler(req, res) {
           note: row.note,
           asxTicker: row.asx_ticker,
           createdAt: row.created_at,
+          domain: row.domain,
+          logoUrl: row.logo_url,
+          industry: row.industry,
+          description: row.description,
+          businessModel: row.business_model,
+          offerings: row.offerings ?? [],
+          headquarters: row.headquarters,
+          employeeCount: row.employee_count,
+          employeeGrowth: row.employee_growth,
+          foundedYear: row.founded_year,
+          profileUpdatedAt: row.profile_updated_at,
         })),
       )
     } catch (err) {
@@ -74,6 +91,45 @@ export default async function handler(req, res) {
     } catch (err) {
       console.error("POST /api/companies failed:", err)
       res.status(500).json({ error: "Failed to save tracked company" })
+      return
+    }
+
+    // Best-effort company-snapshot enrichment — only for a company that
+    // doesn't already have one (an edit to an existing tracked company's
+    // note/status shouldn't re-spend on research it already has). Runs
+    // after the response above logically completes but this is a plain
+    // async function, not a background task: the response has already
+    // been sent by res.status().json(), and Vercel keeps a serverless
+    // function alive until the handler's promise resolves, so this still
+    // finishes properly rather than getting frozen mid-flight. Wrapped so
+    // a slow or failed enrichment (including hitting the monthly budget)
+    // never turns tracking a company into an error the user sees.
+    try {
+      const existing = await sql`SELECT 1 FROM company_profiles WHERE company_key = ${companyKey}`
+      if (existing.length === 0) {
+        const profile = await researchCompanyProfile(companyName)
+        if (profile) {
+          await sql`
+            INSERT INTO company_profiles (
+              company_key, company_name, domain, logo_url, industry, description, business_model,
+              offerings, headquarters, employee_count, employee_growth, founded_year, source_urls
+            )
+            VALUES (
+              ${companyKey}, ${companyName}, ${profile.domain}, ${profile.logoUrl}, ${profile.industry},
+              ${profile.description}, ${profile.businessModel}, ${JSON.stringify(profile.offerings)},
+              ${profile.headquarters}, ${profile.employeeCount}, ${profile.employeeGrowth}, ${profile.foundedYear},
+              ${JSON.stringify(profile.sourceUrls)}
+            )
+            ON CONFLICT (company_key) DO NOTHING
+          `
+        }
+      }
+    } catch (err) {
+      if (err instanceof BudgetExceededError) {
+        console.warn("companyProfile:", err.message)
+      } else {
+        console.error("companyProfile: enrichment failed for", companyName, err)
+      }
     }
     return
   }
