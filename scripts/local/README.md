@@ -162,3 +162,53 @@ Uninstall the same way:
 launchctl unload ~/Library/LaunchAgents/com.sdrdashboard.hiring-signal-sync.plist
 rm ~/Library/LaunchAgents/com.sdrdashboard.hiring-signal-sync.plist
 ```
+
+---
+
+## Local sentiment sync (a third script)
+
+Same shape again — `sync-sentiment.mjs`, `sentiment-prompt.mjs`,
+`db/push-sentiment.mjs`, `com.sdrdashboard.sentiment-sync.plist.template`
+— but this one is behind the dashboard's **Sentiment** tab (per account),
+not the signal feed. It writes to its own table, `company_sentiment`, one
+append-only snapshot per research pass rather than a discrete signal per
+event — see `db/migrations/006_add_company_sentiment.sql`.
+
+Per research pass, it combines two skills into one synthesized read
+instead of a list of findings: `last30days` for general news/analyst
+coverage, and `agent-reach` for Reddit and social-platform chatter
+specifically. Falls back to plain WebSearch/WebFetch for either piece if
+that skill isn't available in your local Claude Code.
+
+**Cost note:** this pass runs two skills per company, roughly double the
+per-company cost of the hiring-signal sync above. `MAX_COMPANIES_PER_RUN`
+defaults to 3 (vs. 5) for that reason, and the template schedules it for
+Wednesday rather than Monday so the two don't stack on the same morning.
+
+Unlike the hiring-signal sync, this one had **not** been run for real as
+of when it was written — the prompt and push script follow the identical
+proven shape (same `claude -p` invocation fixes: `stdio`, subprocess env
+allowlist), but test it by hand before trusting the schedule, more so
+than usual:
+
+```bash
+node --env-file=.env.local scripts/local/sync-sentiment.mjs
+```
+
+Then check `company_sentiment` in your database for a real row, and check
+the Sentiment tab on that account in the dashboard, before loading the
+plist:
+
+```bash
+cp scripts/local/com.sdrdashboard.sentiment-sync.plist.template \
+   ~/Library/LaunchAgents/com.sdrdashboard.sentiment-sync.plist
+# edit the copy, replace every REPLACE_ME_*, then:
+launchctl load ~/Library/LaunchAgents/com.sdrdashboard.sentiment-sync.plist
+```
+
+Uninstall the same way:
+
+```bash
+launchctl unload ~/Library/LaunchAgents/com.sdrdashboard.sentiment-sync.plist
+rm ~/Library/LaunchAgents/com.sdrdashboard.sentiment-sync.plist
+```

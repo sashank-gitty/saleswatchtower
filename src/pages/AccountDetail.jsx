@@ -69,9 +69,24 @@ const TABS = [
   { id: "value", label: "Value" },
   { id: "custom", label: "Custom" },
   { id: "research", label: "Research" },
+  { id: "sentiment", label: "Sentiment" },
   { id: "contacts", label: "Contacts" },
   { id: "tech", label: "Tech" },
 ]
+
+const SENTIMENT_TONE = {
+  positive: "emerald",
+  mixed: "amber",
+  negative: "rose",
+  neutral: "slate",
+}
+
+const EVIDENCE_SOURCE_LABEL = {
+  news: "News",
+  reddit: "Reddit",
+  social: "Social",
+  web: "Web",
+}
 
 // A monogram for the banner's white tile. Same derivation the avatar
 // component uses, minus the colour — on a navy gradient the tile is
@@ -122,7 +137,7 @@ function InfoRow({ icon: Icon, label, value }) {
   )
 }
 
-function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, onToggleClaim }) {
+function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, onToggleClaim, sentiment }) {
   const [tab, setTab] = useState("summary")
   const [group, setGroup] = useState("all")
 
@@ -700,6 +715,75 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
               ))}
             </ul>
           </Card>
+        </div>
+      )}
+
+      {tab === "sentiment" && (
+        <div className="space-y-5">
+          {!sentiment ? (
+            <Card>
+              <EmptyState
+                title="No sentiment research yet"
+                description="This runs from a script on your own Mac (not this website), weekly once you've set it up — see scripts/local/README.md's sentiment-sync section. It combines the last30days and agent-reach skills to read news, Reddit, and social media for a holistic view of what people are saying about this company."
+              />
+            </Card>
+          ) : (
+            <>
+              <Card className="p-5">
+                <div className="flex items-center gap-2">
+                  <Pill tone={SENTIMENT_TONE[sentiment.overallSentiment] ?? "slate"} className="text-[12px] px-2.5 py-1">
+                    {sentiment.overallSentiment[0].toUpperCase() + sentiment.overallSentiment.slice(1)}
+                  </Pill>
+                  <span className="text-[11px] text-slate-400 dark:text-zinc-500">
+                    Last researched {formatDate(sentiment.researchedAt?.slice(0, 10))}
+                  </span>
+                </div>
+                <p className="mt-3 text-[13.5px] leading-relaxed text-body-700 dark:text-zinc-200">{sentiment.summary}</p>
+                {sentiment.themes?.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {sentiment.themes.map((theme) => (
+                      <Pill key={theme} tone="slate">
+                        {theme}
+                      </Pill>
+                    ))}
+                  </div>
+                )}
+              </Card>
+
+              <Card className="p-5">
+                <SectionTitle hint="The real, cited items this read was drawn from — news coverage, Reddit, and social media.">
+                  Evidence
+                </SectionTitle>
+                {!sentiment.evidence || sentiment.evidence.length === 0 ? (
+                  <p className="text-[13px] text-body-500 dark:text-zinc-400">No specific evidence items were cited for this pass.</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {sentiment.evidence.map((item, i) => (
+                      <li key={`${item.url}-${i}`} className="flex items-baseline gap-2 text-[13px]">
+                        <Pill tone="slate" className="flex-shrink-0">
+                          {EVIDENCE_SOURCE_LABEL[item.source] ?? item.source}
+                        </Pill>
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noreferrer noopener"
+                          className="group inline-flex min-w-0 items-baseline gap-1 text-slate-700 hover:text-brand-600 dark:text-zinc-300 dark:hover:text-brand-400"
+                        >
+                          <span className="truncate">{item.headline}</span>
+                          <ExternalLinkIcon className="h-3 w-3 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
+                        </a>
+                        {item.date && (
+                          <span className="ml-auto flex-shrink-0 text-[11px] tabular-nums text-slate-400 dark:text-zinc-500">
+                            {formatDate(item.date)}
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card>
+            </>
+          )}
         </div>
       )}
 

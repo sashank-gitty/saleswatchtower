@@ -135,11 +135,14 @@ async function readBody(req) {
   }
 }
 
-// Only these four are routable. An allow-list rather than a directory
-// scan: api/_lib/* holds the database client, the territory book and the
-// ingest internals, and a path-derived import would happily serve any of
-// them to anyone who guessed the filename.
-const ROUTES = new Set(["signals", "reviews", "ingest", "ingest-status", "territory"])
+// An allow-list rather than a directory scan: api/_lib/* holds the
+// database client and the ingest internals, and a path-derived import
+// would happily serve any of them to anyone who guessed the filename.
+// Kept in sync with the real files in api/ — "territory" was removed
+// (no api/territory.js exists, a stale entry from before tracked_companies
+// replaced it), "companies" and "sentiment" added (both real routes that
+// were missing here, silently 404ing under self-hosting only).
+const ROUTES = new Set(["signals", "reviews", "ingest", "ingest-status", "companies", "sentiment"])
 const handlerCache = new Map()
 
 async function loadHandler(name) {

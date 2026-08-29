@@ -19,6 +19,7 @@ import { useUrlState } from "./lib/useUrlState.js"
 import { deriveAccounts, findAccount } from "./lib/accountModel.js"
 import { useAlerts, matchAlert } from "./lib/useAlerts.js"
 import { useCompanies } from "./lib/useCompanies.js"
+import { useSentiment } from "./lib/useSentiment.js"
 import { Button } from "./components/ui.jsx"
 
 function App() {
@@ -114,6 +115,7 @@ function App() {
   }, [route.page, route.accountId])
 
   const { companies, isTracked, trackedAt, setCompany } = useCompanies()
+  const { sentimentFor } = useSentiment()
   const accounts = useMemo(() => deriveAccounts(signals, companies), [signals, companies])
 
   const openItem = useMemo(() => signals.find((s) => s.id === openSignalId) ?? null, [signals, openSignalId])
@@ -246,6 +248,7 @@ function App() {
             isClaimed={isTracked}
             claimedAt={trackedAt}
             onToggleClaim={setCompany}
+            sentiment={sentimentFor(activeAccount?.key)}
           />
         )}
 

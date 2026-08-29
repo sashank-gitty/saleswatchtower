@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Template — copy to ~/Library/LaunchAgents/com.sdrdashboard.sentiment-sync.plist
+  and replace every REPLACE_ME before loading. See scripts/local/README.md.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.sdrdashboard.sentiment-sync</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>REPLACE_ME_NODE_PATH</string>
+        <!-- e.g. /usr/local/bin/node or /opt/homebrew/bin/node — run `which node` to find yours -->
+        <string>REPLACE_ME_REPO_PATH/scripts/local/sync-sentiment.mjs</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>DATABASE_URL</key>
+        <string>REPLACE_ME_DATABASE_URL</string>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:/opt/homebrew/bin:REPLACE_ME_CLAUDE_CLI_DIR</string>
+        <!-- claude must be resolvable on this PATH — launchd does not read your shell's PATH -->
+    </dict>
+
+    <!--
+      Fires weekly, Wednesday at 09:00 local time — deliberately a
+      different day from the hiring-signal sync's Monday run, so both
+      don't stack on the same morning. This pass runs two skills per
+      company (last30days + agent-reach), so it costs roughly double per
+      company versus the hiring-signal sync; MAX_COMPANIES_PER_RUN
+      defaults to 3 for that reason (set it as another
+      EnvironmentVariables entry above to change it).
+    -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key>
+        <integer>3</integer>
+        <key>Hour</key>
+        <integer>9</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>REPLACE_ME_HOME/Library/Logs/sdr-dashboard-sentiment.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>REPLACE_ME_HOME/Library/Logs/sdr-dashboard-sentiment-error.log</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>
