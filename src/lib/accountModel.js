@@ -178,16 +178,30 @@ export function deriveAccounts(signals, companies = [], now = Date.now()) {
       ).length
       const tracked = companiesByKey.get(account.key) ?? null
 
+      // "Managed" has to mean "is this company on my tracked list right
+      // now" — the live truth, `tracked` above (a real row in
+      // tracked_companies). account.tracked (set in the loop above) is a
+      // narrower, historical signal: whether some signal's
+      // matched_companies happened to include this name, which is fixed
+      // at ingest time. Adding a company after its signals already
+      // existed left matched_companies empty on those older rows
+      // forever — a company you'd just tracked would show "Mine" (from
+      // isClaimed, which checks the live list directly) right next to
+      // "Not tracked" in the banner (from the old account.tracked-only
+      // check) until the next ingest run happened to re-match it. Either
+      // signal being true is enough to call an account managed now.
+      const managed = account.tracked || tracked !== null
+
       return {
         key: account.key,
-        name: account.name,
+        name: tracked?.companyName ?? account.name,
         signals: sorted,
         signalCount: sorted.length,
         highRelevanceCount,
         unreviewedCount: sorted.filter((s) => !s.reviewed).length,
-        status: tracked?.status ?? (account.tracked ? "prospect" : null),
+        status: tracked?.status ?? (managed ? "prospect" : null),
         note: tracked?.note ?? null,
-        managed: account.tracked,
+        managed,
         // Company-snapshot fields (api/_lib/companyProfile.js) — only a
         // tracked company can have one, since that's the only time it
         // gets fetched. Untracked/derived accounts carry nulls, same as
