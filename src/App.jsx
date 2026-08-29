@@ -6,7 +6,6 @@ import ErrorState from "./components/ErrorState.jsx"
 import Briefing from "./pages/Briefing.jsx"
 import GlobalFeed from "./pages/GlobalFeed.jsx"
 import Accounts from "./pages/Accounts.jsx"
-import MyAccounts from "./pages/MyAccounts.jsx"
 import AccountDetail from "./pages/AccountDetail.jsx"
 import SearchPage from "./pages/Search.jsx"
 import Alerts from "./pages/Alerts.jsx"
@@ -237,7 +236,13 @@ function App() {
         )}
 
         {route.page === "accounts" && !route.accountId && (
-          <Accounts signals={signals} companies={companies} loading={loading} isClaimed={isTracked} onToggleClaim={setCompany} />
+          <Accounts
+            signals={signals}
+            companies={companies}
+            loading={loading}
+            isClaimed={isTracked}
+            onToggleClaim={setCompany}
+          />
         )}
 
         {route.page === "accounts" && route.accountId && (
@@ -252,8 +257,20 @@ function App() {
           />
         )}
 
+        {/* My Accounts used to be its own page — a second nav item right
+            next to "Accounts" that looked like it might mean something
+            different, and didn't. It's the "Tracked" filter on Accounts
+            now. This route stays only so an old bookmark or link to
+            /my-accounts still lands somewhere useful instead of 404ing. */}
         {route.page === "my-accounts" && (
-          <MyAccounts accounts={accounts} claims={companies} loading={loading} isClaimed={isTracked} onToggleClaim={setCompany} />
+          <Accounts
+            signals={signals}
+            companies={companies}
+            loading={loading}
+            isClaimed={isTracked}
+            onToggleClaim={setCompany}
+            initialType="mine"
+          />
         )}
 
         {route.page === "search" && <SearchPage signals={signals} companies={companies} onOpenSignal={openSignal} />}

@@ -262,7 +262,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
               onClick={() => onToggleClaim(account.key, account.name, !isClaimed?.(account.key))}
             >
               <PinIcon filled={isClaimed?.(account.key)} className="h-4 w-4" />
-              {isClaimed?.(account.key) ? "In My Accounts" : "Add to My Accounts"}
+              {isClaimed?.(account.key) ? "Tracked" : "Track this account"}
             </Button>
           )}
           <Button variant="secondary" onClick={() => window.location.reload()}>

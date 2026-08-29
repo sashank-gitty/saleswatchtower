@@ -82,12 +82,13 @@ function ColumnsMenu({ columns, visible, onToggle }) {
   )
 }
 
-// The account table shared by the Accounts page (every derived account)
-// and the My Accounts page (only the ones manually claimed) — same
+// The account table used by the Accounts page in both its modes — every
+// derived account, or just the ones you've tracked (the "Tracked" type
+// filter, what used to be a whole separate My Accounts page) — same
 // columns, same sort/star/claim behaviour, so an account looks and works
-// identically whichever list it's viewed from. Owns its own sort, column
-// visibility and pagination state; the caller only supplies the
-// already-filtered account list and the header/toolbar around it.
+// identically either way. Owns its own sort, column visibility and
+// pagination state; the caller only supplies the already-filtered
+// account list and the header/toolbar around it.
 function AccountsTable({
   accounts,
   loading,
@@ -257,7 +258,7 @@ function AccountsTable({
                         <button
                           type="button"
                           onClick={() => onToggleClaim(account.key, account.name, !isClaimed?.(account.key))}
-                          aria-label={isClaimed?.(account.key) ? "Remove from My Accounts" : "Add to My Accounts"}
+                          aria-label={isClaimed?.(account.key) ? "Stop tracking this account" : "Track this account"}
                           aria-pressed={isClaimed?.(account.key)}
                           className={`transition-colors ${
                             isClaimed?.(account.key)

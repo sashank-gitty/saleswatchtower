@@ -126,7 +126,7 @@ function Competitors({ signals, companies = [], loading, onOpenSignal, onToggleR
           </Eyebrow>
         }
         title="Competitor Intelligence"
-        subtitle="Everything the companies you compete with have been up to. This is for keeping your own positioning current — none of these are companies to prospect into. Flag a tracked company as a competitor on My Accounts to have it show up here."
+        subtitle="What competitors have been up to — for positioning, not prospecting."
       >
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <SearchInput value={search} onChange={setSearch} placeholder="Search competitors..." className="col-span-2 sm:col-span-1" />
@@ -154,7 +154,7 @@ function Competitors({ signals, companies = [], loading, onOpenSignal, onToggleR
         ) : !hasAnyCompetitor ? (
           <EmptyState
             title="No competitors tracked yet"
-            description='Go to My Accounts and add a company with "This is a competitor" checked to start tracking its news here.'
+            description='Track a company from the Accounts page with "This is a competitor" checked to start tracking its news here.'
           />
         ) : active.length === 0 ? (
           <EmptyState

@@ -16,7 +16,6 @@ import {
   BellIcon,
   MenuIcon,
   XIcon,
-  PinIcon,
 } from "./icons.jsx"
 
 const NAV_ITEMS = [
@@ -24,8 +23,12 @@ const NAV_ITEMS = [
   { page: "radar", href: "/radar", label: "Radar", Icon: RadarIcon },
   { page: "feed", href: "/feed", label: "Global Feed", Icon: FeedIcon },
   { page: "competitors", href: "/competitors", label: "Competitors", Icon: TargetIcon },
+  // "My Accounts" used to be its own item here, right next to this one —
+  // two nearly-identical nav labels that looked like they might mean
+  // different things and didn't. It's the "Tracked" filter on this page
+  // now (src/pages/Accounts.jsx); /my-accounts still resolves (App.jsx),
+  // just isn't linked from the nav anymore.
   { page: "accounts", href: "/accounts", label: "Accounts", Icon: BriefcaseIcon },
-  { page: "my-accounts", href: "/my-accounts", label: "My Accounts", Icon: PinIcon },
   { page: "alerts", href: "/alerts", label: "Alerts", Icon: AlertIcon },
   { page: "settings", href: "/settings", label: "Settings", Icon: SlidersIcon },
 ]
