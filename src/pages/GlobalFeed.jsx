@@ -59,7 +59,7 @@ function QuickFilterChip({ active, onClick, children }) {
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`rounded-full border px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+      className={`rounded-full border px-3.5 py-1.5 text-dense font-semibold transition-colors ${
         active
           ? "border-transparent bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
           : "border-slate-200 text-body-600 hover:border-slate-300 hover:bg-slate-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:text-zinc-100"
@@ -90,7 +90,7 @@ function AccountBlock({ account, signals, onOpenSignal, onToggleReviewed }) {
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <a
               {...linkProps(`/accounts/${encodeURIComponent(account.key)}`)}
-              className="truncate text-[13.5px] font-bold text-ink-900 hover:text-brand-600 dark:text-zinc-50 dark:hover:text-brand-400"
+              className="truncate text-dense font-bold text-ink-900 hover:text-brand-600 dark:text-zinc-50 dark:hover:text-brand-400"
             >
               {account.name}
             </a>
@@ -130,7 +130,7 @@ function AccountBlock({ account, signals, onOpenSignal, onToggleReviewed }) {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="flex w-full items-center justify-center gap-1 px-4 py-2 text-[12px] font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100"
+          className="flex w-full items-center justify-center gap-1 px-4 py-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100"
         >
           <ChevronDownIcon className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
           {expanded ? "Show fewer" : `Show all ${signals.length} signals`}
@@ -285,7 +285,7 @@ function GlobalFeed({ signals, companies = [], loading, onOpenSignal, onToggleRe
                   setHighRelevanceOnly(false)
                   setMatchedOnly(false)
                 }}
-                className="text-[12px] font-medium text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-200"
+                className="text-xs font-medium text-slate-400 hover:text-slate-700 dark:text-zinc-500 dark:hover:text-zinc-200"
               >
                 Clear quick filters
               </button>

@@ -74,6 +74,13 @@ const TABS = [
   { id: "tech", label: "Tech" },
 ]
 
+// Checked against colors.js's stated rule — color reserved for genuine
+// "look here first" signals, not decoration on every metadata field.
+// This one holds: overall sentiment is the single most important fact on
+// this tab, exactly the kind of thing that rule carves out an exception
+// for (see REGULATORY_PILL there for the same reasoning). "Neutral"
+// stays the shared NEUTRAL_PILL slate rather than getting its own tint,
+// so only a real positive/mixed/negative reading draws the eye.
 const SENTIMENT_TONE = {
   positive: "emerald",
   mixed: "amber",
@@ -115,7 +122,7 @@ function BriefSection({ icon, tone, title, count, children, className = "" }) {
         <IconBadge icon={icon} tone={tone.badge} size="sm" />
         <h3 className="text-[15px] font-bold text-ink-900 dark:text-zinc-50">{title}</h3>
         {count !== undefined && count > 0 && (
-          <span className="text-[11px] font-semibold tabular-nums text-slate-400 dark:text-zinc-500">{count}</span>
+          <span className="text-2xs font-semibold tabular-nums text-slate-400 dark:text-zinc-500">{count}</span>
         )}
       </div>
       {children}
@@ -124,15 +131,15 @@ function BriefSection({ icon, tone, title, count, children, className = "" }) {
 }
 
 function EmptyLine({ children }) {
-  return <p className="text-[13px] leading-relaxed text-body-500 dark:text-zinc-400">{children}</p>
+  return <p className="text-dense leading-relaxed text-body-500 dark:text-zinc-400">{children}</p>
 }
 
 function InfoRow({ icon: Icon, label, value }) {
   return (
     <div className="flex items-start gap-2 py-1.5">
       {Icon && <Icon className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400 dark:text-zinc-500" />}
-      <span className="text-[13px] text-body-500 dark:text-zinc-400">{label}</span>
-      <span className="ml-auto text-right text-[13px] font-semibold text-ink-900 dark:text-zinc-100">{value}</span>
+      <span className="text-dense text-body-500 dark:text-zinc-400">{label}</span>
+      <span className="ml-auto text-right text-dense font-semibold text-ink-900 dark:text-zinc-100">{value}</span>
     </div>
   )
 }
@@ -207,7 +214,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
     <>
       <a
         {...linkProps("/accounts")}
-        className="mb-3 inline-flex items-center gap-1 text-[13px] font-medium text-slate-500 transition-colors hover:text-ink-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+        className="mb-3 inline-flex items-center gap-1 text-dense font-medium text-slate-500 transition-colors hover:text-ink-900 dark:text-zinc-400 dark:hover:text-zinc-100"
       >
         <ChevronLeftIcon className="h-4 w-4" />
         Accounts
@@ -233,7 +240,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
       >
         <div className="flex flex-shrink-0 flex-col items-center rounded-xl bg-white/15 px-4 py-2.5 text-white backdrop-blur-sm">
           <span className="text-2xl font-bold leading-none tabular-nums">{account.score}</span>
-          <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-white/70">Score</span>
+          <span className="mt-1 text-3xs font-semibold uppercase tracking-wider text-white/70">Score</span>
         </div>
       </GradientBanner>
 
@@ -279,7 +286,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
               <div className="space-y-4">
                 {buckets.map((bucket) => (
                   <div key={bucket.id}>
-                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                    <p className="mb-1.5 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
                       {bucket.label}
                     </p>
                     <ul className="space-y-1">
@@ -288,7 +295,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                           <button
                             type="button"
                             onClick={() => onOpenSignal(signal.id)}
-                            className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-[12.5px] text-body-600 transition-colors hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-800/40"
+                            className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-body-600 transition-colors hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-800/40"
                           >
                             <IconBadge
                               icon={iconForSignal(signal)}
@@ -310,7 +317,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
               <div className="space-y-2">
                 {distribution.map((entry) => (
                   <div key={entry.id} className="flex items-center gap-3">
-                    <span className="w-40 flex-shrink-0 truncate text-[12px] text-body-600 dark:text-zinc-300">
+                    <span className="w-40 flex-shrink-0 truncate text-xs text-body-600 dark:text-zinc-300">
                       {entry.label}
                     </span>
                     <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
@@ -319,7 +326,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                         style={{ width: `${Math.max(4, entry.share * 100)}%` }}
                       />
                     </div>
-                    <span className="w-8 flex-shrink-0 text-right text-[12px] tabular-nums text-body-500 dark:text-zinc-400">
+                    <span className="w-8 flex-shrink-0 text-right text-xs tabular-nums text-body-500 dark:text-zinc-400">
                       {entry.count}
                     </span>
                   </div>
@@ -374,7 +381,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                       const angle = outreachAngles(insight.signals[0], account.status)[0]
                       return (
                         <li key={insight.id} className="min-w-0">
-                          <p className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">
+                          <p className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">
                             <span className="font-semibold text-ink-900 dark:text-zinc-100">{insight.label}:</span>{" "}
                             {insight.count} {insight.count === 1 ? "signal" : "signals"}
                             {insight.highCount > 0 && (
@@ -386,11 +393,11 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                             , most recent {formatDate(insight.newest)}. Lead: &ldquo;{insight.lead}&rdquo;
                             <Citations signals={insight.signals} indexOf={indexOf} onOpen={onOpenSignal} />
                           </p>
-                          <p className="mt-1.5 text-[12px] leading-relaxed text-body-500 dark:text-zinc-400">
+                          <p className="mt-1.5 text-xs leading-relaxed text-body-500 dark:text-zinc-400">
                             {accountImpact(insight.signals[0])}
                           </p>
                           {angle && (
-                            <p className="mt-1.5 text-[12px] leading-relaxed text-body-500 dark:text-zinc-400">
+                            <p className="mt-1.5 text-xs leading-relaxed text-body-500 dark:text-zinc-400">
                               <span className="font-semibold text-body-600 dark:text-zinc-300">
                                 Angle &mdash; {angle.label}:
                               </span>{" "}
@@ -419,7 +426,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                 ) : (
                   <ul className="space-y-2.5">
                     {opportunities.map((signal) => (
-                      <li key={signal.id} className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">
+                      <li key={signal.id} className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">
                         {signal.headline}
                         <Citations signals={[signal]} indexOf={indexOf} onOpen={onOpenSignal} />
                       </li>
@@ -440,7 +447,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                 ) : (
                   <ul className="space-y-2.5">
                     {challenges.map((signal) => (
-                      <li key={signal.id} className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">
+                      <li key={signal.id} className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">
                         {signal.headline}
                         <Citations signals={[signal]} indexOf={indexOf} onOpen={onOpenSignal} />
                       </li>
@@ -487,7 +494,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                 ) : (
                   <ul className="space-y-2.5">
                     {people.map((signal) => (
-                      <li key={signal.id} className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">
+                      <li key={signal.id} className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">
                         {signal.headline}
                         <Citations signals={[signal]} indexOf={indexOf} onOpen={onOpenSignal} />
                       </li>
@@ -508,7 +515,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                 ) : (
                   <ul className="space-y-2.5">
                     {news.map((signal) => (
-                      <li key={signal.id} className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">
+                      <li key={signal.id} className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">
                         {signal.headline}
                         {(signal.outreachRelevance ?? 0) >= HIGH_RELEVANCE_THRESHOLD && (
                           <span className="ml-1.5 align-middle">
@@ -554,21 +561,21 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                 >
                   <IconBadge icon={iconForSignal(signal)} tone={toneClassesForSignal(signal).badge} />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[13px] font-semibold text-ink-900 dark:text-zinc-100">
+                    <span className="block text-dense font-semibold text-ink-900 dark:text-zinc-100">
                       {signal.headline}
                     </span>
-                    <span className="mt-0.5 block line-clamp-2 text-[12px] text-body-500 dark:text-zinc-400">
+                    <span className="mt-0.5 block line-clamp-2 text-xs text-body-500 dark:text-zinc-400">
                       {signal.summary}
                     </span>
                     <span className="mt-1.5 inline-flex">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${pillClassForSignalType(signal.signalType)}`}
+                        className={`rounded-full px-2 py-0.5 text-2xs font-semibold capitalize ${pillClassForSignalType(signal.signalType)}`}
                       >
                         {signal.signalType}
                       </span>
                     </span>
                   </span>
-                  <span className="flex-shrink-0 text-[12px] tabular-nums text-slate-400 dark:text-zinc-500">
+                  <span className="flex-shrink-0 text-xs tabular-nums text-slate-400 dark:text-zinc-500">
                     {formatDate(signal.date)}
                   </span>
                 </button>
@@ -584,7 +591,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
             Value Pyramid
           </SectionTitle>
           {pyramid.length === 0 ? (
-            <p className="text-[13px] text-body-500 dark:text-zinc-400">
+            <p className="text-dense text-body-500 dark:text-zinc-400">
               Not enough signal variety yet to build a value view for this account.
             </p>
           ) : (
@@ -592,10 +599,10 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
               {pyramid.map((tier) => (
                 <section key={tier.id} className="border-l-2 border-brand-500 pl-4">
                   <h3 className="text-[15px] font-semibold text-brand-600 dark:text-brand-400">{tier.label}</h3>
-                  <p className="mt-0.5 text-[12px] text-body-500 dark:text-zinc-400">{tier.blurb}</p>
+                  <p className="mt-0.5 text-xs text-body-500 dark:text-zinc-400">{tier.blurb}</p>
                   <ul className="mt-2.5 space-y-2">
                     {tier.items.map((item) => (
-                      <li key={item.groupId} className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">
+                      <li key={item.groupId} className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">
                         <span className="font-medium text-ink-900 dark:text-zinc-100">{item.label}</span> —{" "}
                         {item.signals.length} {item.signals.length === 1 ? "signal" : "signals"}, led by &ldquo;
                         {item.signals[0].headline}&rdquo;
@@ -624,8 +631,8 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
             />
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-[13px]">
-                <thead className="border-y border-slate-200 bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-400">
+              <table className="w-full min-w-[720px] text-dense">
+                <thead className="border-y border-slate-200 bg-slate-50 text-2xs uppercase tracking-wider text-slate-500 dark:border-zinc-800 dark:bg-zinc-900/60 dark:text-zinc-400">
                   <tr>
                     <th scope="col" className="px-4 py-2.5 text-left font-medium">Persona</th>
                     <th scope="col" className="px-4 py-2.5 text-left font-medium">Discovery question</th>
@@ -661,10 +668,10 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
             <div className="mb-4 flex items-center gap-3">
               <ScoreBadge score={account.score} size="lg" />
               <div>
-                <p className="text-[13px] font-medium text-ink-900 dark:text-zinc-100">
+                <p className="text-dense font-medium text-ink-900 dark:text-zinc-100">
                   {account.score} / 100 &middot; {account.priority.label}
                 </p>
-                <p className="text-[12px] text-body-500 dark:text-zinc-400">
+                <p className="text-xs text-body-500 dark:text-zinc-400">
                   Weighted: relevance 55%, recency 30%, volume 15%
                 </p>
               </div>
@@ -676,14 +683,14 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                 { label: "Sustained activity (volume)", value: account.scoreBreakdown.volume, weight: "15%" },
               ].map((row) => (
                 <div key={row.label} className="flex items-center gap-3">
-                  <span className="w-56 flex-shrink-0 text-[12px] text-body-600 dark:text-zinc-300">{row.label}</span>
+                  <span className="w-56 flex-shrink-0 text-xs text-body-600 dark:text-zinc-300">{row.label}</span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
                     <div
                       className="h-full rounded-full bg-brand-500"
                       style={{ width: `${Math.max(2, row.value * 100)}%` }}
                     />
                   </div>
-                  <span className="w-16 flex-shrink-0 text-right text-[12px] tabular-nums text-body-500 dark:text-zinc-400">
+                  <span className="w-16 flex-shrink-0 text-right text-xs tabular-nums text-body-500 dark:text-zinc-400">
                     {Math.round(row.value * 100)}% &times; {row.weight}
                   </span>
                 </div>
@@ -695,8 +702,8 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
             <SectionTitle>All Sources</SectionTitle>
             <ul className="space-y-1.5">
               {account.signals.map((signal) => (
-                <li key={signal.id} className="flex items-baseline gap-2 text-[13px]">
-                  <span className="w-6 flex-shrink-0 text-right text-[11px] font-semibold tabular-nums text-slate-400 dark:text-zinc-500">
+                <li key={signal.id} className="flex items-baseline gap-2 text-dense">
+                  <span className="w-6 flex-shrink-0 text-right text-2xs font-semibold tabular-nums text-slate-400 dark:text-zinc-500">
                     {indexOf(signal)}
                   </span>
                   <a
@@ -708,7 +715,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                     <span className="truncate">{signal.headline}</span>
                     <ExternalLinkIcon className="h-3 w-3 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                   </a>
-                  <span className="ml-auto flex-shrink-0 text-[11px] tabular-nums text-slate-400 dark:text-zinc-500">
+                  <span className="ml-auto flex-shrink-0 text-2xs tabular-nums text-slate-400 dark:text-zinc-500">
                     {formatDate(signal.date)}
                   </span>
                 </li>
@@ -731,14 +738,14 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
             <>
               <Card className="p-5">
                 <div className="flex items-center gap-2">
-                  <Pill tone={SENTIMENT_TONE[sentiment.overallSentiment] ?? "slate"} className="text-[12px] px-2.5 py-1">
+                  <Pill tone={SENTIMENT_TONE[sentiment.overallSentiment] ?? "slate"} className="text-xs px-2.5 py-1">
                     {sentiment.overallSentiment[0].toUpperCase() + sentiment.overallSentiment.slice(1)}
                   </Pill>
-                  <span className="text-[11px] text-slate-400 dark:text-zinc-500">
+                  <span className="text-2xs text-slate-400 dark:text-zinc-500">
                     Last researched {formatDate(sentiment.researchedAt?.slice(0, 10))}
                   </span>
                 </div>
-                <p className="mt-3 text-[13.5px] leading-relaxed text-body-700 dark:text-zinc-200">{sentiment.summary}</p>
+                <p className="mt-3 text-dense leading-relaxed text-body-600 dark:text-zinc-200">{sentiment.summary}</p>
                 {sentiment.themes?.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-1.5">
                     {sentiment.themes.map((theme) => (
@@ -755,11 +762,11 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                   Evidence
                 </SectionTitle>
                 {!sentiment.evidence || sentiment.evidence.length === 0 ? (
-                  <p className="text-[13px] text-body-500 dark:text-zinc-400">No specific evidence items were cited for this pass.</p>
+                  <p className="text-dense text-body-500 dark:text-zinc-400">No specific evidence items were cited for this pass.</p>
                 ) : (
                   <ul className="space-y-1.5">
                     {sentiment.evidence.map((item, i) => (
-                      <li key={`${item.url}-${i}`} className="flex items-baseline gap-2 text-[13px]">
+                      <li key={`${item.url}-${i}`} className="flex items-baseline gap-2 text-dense">
                         <Pill tone="slate" className="flex-shrink-0">
                           {EVIDENCE_SOURCE_LABEL[item.source] ?? item.source}
                         </Pill>
@@ -773,7 +780,7 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                           <ExternalLinkIcon className="h-3 w-3 flex-shrink-0 opacity-0 transition-opacity group-hover:opacity-100" />
                         </a>
                         {item.date && (
-                          <span className="ml-auto flex-shrink-0 text-[11px] tabular-nums text-slate-400 dark:text-zinc-500">
+                          <span className="ml-auto flex-shrink-0 text-2xs tabular-nums text-slate-400 dark:text-zinc-500">
                             {formatDate(item.date)}
                           </span>
                         )}

@@ -28,14 +28,14 @@ function AlertCard({ alert, signals, onUpdate, onDelete, onOpenSignal }) {
       <div className="flex flex-wrap items-start gap-3 p-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-[14px] font-semibold text-ink-900 dark:text-zinc-50">{alert.name}</h3>
+            <h3 className="text-sm font-semibold text-ink-900 dark:text-zinc-50">{alert.name}</h3>
             <Pill tone={alert.frequency === "daily" ? "brand" : "slate"}>
               {alert.frequency === "daily" ? "Daily" : "Weekly"}
             </Pill>
             {!alert.active && <Pill tone="slate">Paused</Pill>}
           </div>
-          <p className="mt-1 text-[12px] text-body-500 dark:text-zinc-400">{facets.join(" · ") || "All signals"}</p>
-          <p className="mt-0.5 text-[11px] text-slate-400 dark:text-zinc-500">
+          <p className="mt-1 text-xs text-body-500 dark:text-zinc-400">{facets.join(" · ") || "All signals"}</p>
+          <p className="mt-0.5 text-2xs text-slate-400 dark:text-zinc-500">
             Created {formatDate(alert.createdAt)}
             {alert.emailCc ? ` · CC ${alert.emailCc}` : ""}
           </p>
@@ -44,7 +44,7 @@ function AlertCard({ alert, signals, onUpdate, onDelete, onOpenSignal }) {
         <div className="flex items-center gap-3">
           <div className="text-right">
             <p className="text-lg font-semibold tabular-nums text-ink-900 dark:text-zinc-50">{matches.length}</p>
-            <p className="text-[11px] text-slate-400 dark:text-zinc-500">matches now</p>
+            <p className="text-2xs text-slate-400 dark:text-zinc-500">matches now</p>
           </div>
           <Toggle checked={alert.active} onChange={(value) => onUpdate(alert.id, { active: value })} />
           <button
@@ -70,15 +70,15 @@ function AlertCard({ alert, signals, onUpdate, onDelete, onOpenSignal }) {
                   className="flex w-full items-start gap-2.5 px-4 py-2.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800/40"
                 >
                   <span
-                    className={`mt-0.5 inline-flex flex-shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium ${pillClassForSignalType(signal.signalType)}`}
+                    className={`mt-0.5 inline-flex flex-shrink-0 items-center gap-1 rounded-md px-1.5 py-0.5 text-2xs font-medium ${pillClassForSignalType(signal.signalType)}`}
                   >
                     <Icon className="h-3 w-3" />
                     {signal.signalType}
                   </span>
-                  <span className="min-w-0 flex-1 truncate text-[13px] text-body-600 dark:text-zinc-200">
+                  <span className="min-w-0 flex-1 truncate text-dense text-body-600 dark:text-zinc-200">
                     {signal.headline}
                   </span>
-                  <span className="flex-shrink-0 text-[12px] tabular-nums text-slate-400 dark:text-zinc-500">
+                  <span className="flex-shrink-0 text-xs tabular-nums text-slate-400 dark:text-zinc-500">
                     {formatDate(signal.date)}
                   </span>
                 </button>
@@ -107,10 +107,10 @@ function Alerts({ signals, onOpenSignal }) {
       />
 
       <div className="mb-5 rounded-xl border border-amber-500/30 bg-amber-500/5 px-4 py-3">
-        <p className="text-[13px] font-medium text-amber-700 dark:text-amber-400">
+        <p className="text-dense font-medium text-amber-700 dark:text-amber-400">
           Alerts are saved queries, not notifications &mdash; yet.
         </p>
-        <p className="mt-0.5 text-[12px] leading-relaxed text-amber-700/80 dark:text-amber-400/80">
+        <p className="mt-0.5 text-xs leading-relaxed text-amber-700/80 dark:text-amber-400/80">
           Each alert below re-runs live against the current signal set, so the match count and preview are real. Email
           delivery is not wired up: it needs a scheduled server job with a mail transport, alongside the existing ingest
           cron. Alerts are also stored per-browser in localStorage, so they don&rsquo;t follow you between devices.

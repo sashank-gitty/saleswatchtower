@@ -244,13 +244,13 @@ function MyAccounts({ accounts, claims, loading, isClaimed, onToggleClaim }) {
                 {orphanedClaims.map((c) => (
                   <Card key={c.companyKey} className="flex flex-wrap items-start gap-3 p-4">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[13.5px] font-bold text-ink-900 dark:text-zinc-50">{c.companyName}</p>
+                      <p className="text-dense font-bold text-ink-900 dark:text-zinc-50">{c.companyName}</p>
                       {c.note ? (
-                        <p className="mt-1 text-[12.5px] leading-relaxed text-body-600 dark:text-zinc-300">{c.note}</p>
+                        <p className="mt-1 text-xs leading-relaxed text-body-600 dark:text-zinc-300">{c.note}</p>
                       ) : (
-                        <p className="mt-1 text-[12.5px] italic text-body-500 dark:text-zinc-500">No note added</p>
+                        <p className="mt-1 text-xs italic text-body-500 dark:text-zinc-500">No note added</p>
                       )}
-                      <p className="mt-1.5 text-[11px] text-slate-400 dark:text-zinc-500">Added {formatDate(c.createdAt)}</p>
+                      <p className="mt-1.5 text-2xs text-slate-400 dark:text-zinc-500">Added {formatDate(c.createdAt)}</p>
                     </div>
                     <Button
                       variant="ghost"

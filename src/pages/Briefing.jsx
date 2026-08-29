@@ -66,9 +66,9 @@ function SyncBanner({ status }) {
       <div className="rounded-xl border border-rose-500/30 bg-rose-500/5 px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-rose-500" aria-hidden="true" />
-          <p className="text-[13px] font-semibold text-rose-700 dark:text-rose-400">Sync status unavailable</p>
+          <p className="text-dense font-semibold text-rose-700 dark:text-rose-400">Sync status unavailable</p>
         </div>
-        <p className="mt-1 text-[12px] text-rose-700/80 dark:text-rose-400/80">
+        <p className="mt-1 text-xs text-rose-700/80 dark:text-rose-400/80">
           <span className="font-mono">GET /api/ingest-status</span> returned an error just now: &ldquo;{status.message}
           &rdquo;. The signal feed below loaded fine &mdash; only the last-run health check is affected.
         </p>
@@ -79,7 +79,7 @@ function SyncBanner({ status }) {
   if (status.phase === "empty") {
     return (
       <div className="rounded-xl border border-slate-200 bg-slate-50/70 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/40">
-        <p className="text-[13px] font-medium text-body-600 dark:text-zinc-300">No ingest runs recorded yet.</p>
+        <p className="text-dense font-medium text-body-600 dark:text-zinc-300">No ingest runs recorded yet.</p>
       </div>
     )
   }
@@ -99,14 +99,14 @@ function SyncBanner({ status }) {
     <div className={`rounded-xl border px-4 py-3 ${tone.border} ${tone.bg}`}>
       <div className="flex flex-wrap items-center gap-2">
         <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${tone.dot}`} aria-hidden="true" />
-        <p className={`text-[13px] font-semibold ${tone.text}`}>
+        <p className={`text-dense font-semibold ${tone.text}`}>
           {runFailed ? "Last ingest run failed" : `Last sync ${relativeTime(data.runAt)}`}
         </p>
         {isStale && !runFailed && <Pill tone="amber">No run in {Math.round(hoursSinceRun)}h &mdash; check the cron</Pill>}
         {budgetExceeded && <Pill tone="amber">Monthly Claude budget reached</Pill>}
       </div>
       {runFailed && data.errorMessage && (
-        <p className="mt-1 text-[12px] text-amber-700/80 dark:text-amber-400/80">{data.errorMessage}</p>
+        <p className="mt-1 text-xs text-amber-700/80 dark:text-amber-400/80">{data.errorMessage}</p>
       )}
     </div>
   )
@@ -126,13 +126,13 @@ function TypeBreakdown({ typeCounts }) {
 
   return (
     <Card className="p-5">
-      <p className="mb-4 text-[12px] text-body-500 dark:text-zinc-400">
+      <p className="mb-4 text-xs text-body-500 dark:text-zinc-400">
         Signal types across all {typeCounts.reduce((sum, t) => sum + t.count, 0)} signals.
       </p>
       <div className="space-y-3">
         {typeCounts.map(({ signalType, count, swatch }) => (
           <div key={signalType} className="flex items-center gap-3">
-            <span className="w-32 flex-shrink-0 truncate text-[13px] font-medium capitalize text-body-600 dark:text-zinc-300">
+            <span className="w-32 flex-shrink-0 truncate text-dense font-medium capitalize text-body-600 dark:text-zinc-300">
               {signalType}
             </span>
             <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
@@ -141,7 +141,7 @@ function TypeBreakdown({ typeCounts }) {
                 style={{ width: `${Math.max((count / max) * 100, 4)}%` }}
               />
             </div>
-            <span className="w-6 flex-shrink-0 text-right text-[13px] font-semibold tabular-nums text-body-500 dark:text-zinc-400">
+            <span className="w-6 flex-shrink-0 text-right text-dense font-semibold tabular-nums text-body-500 dark:text-zinc-400">
               {count}
             </span>
           </div>
@@ -259,7 +259,7 @@ function Briefing({ signals, loading, onOpenSignal, onToggleReviewed }) {
           </SectionTitle>
           <TypeBreakdown typeCounts={briefing.typeCounts} />
 
-          <p className="mt-8 text-[11px] text-body-500 dark:text-zinc-500">
+          <p className="mt-8 text-2xs text-body-500 dark:text-zinc-500">
             {briefing.total} signals in the feed
             {briefing.anchor ? ` · latest ingested ${briefing.anchor.toLocaleString()}` : ""}
           </p>

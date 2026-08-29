@@ -23,7 +23,7 @@ export function Eyebrow({ tone = "brand", className = "", children }) {
   }
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider ${
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-2xs font-semibold uppercase tracking-wider ${
         tones[tone] ?? tones.brand
       } ${className}`}
     >
@@ -56,7 +56,13 @@ export function PageHeader({ title, eyebrow, subtitle, actions, children }) {
 export function Card({ className = "", children, ...props }) {
   return (
     <div
-      className={`rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(9,23,43,0.04)] dark:border-zinc-800 dark:bg-zinc-900/60 dark:shadow-none ${className}`}
+      // Light mode gets a border plus a soft drop shadow; dark mode was
+      // shadow-none, relying on border-zinc-800 alone for separation. A
+      // page with many stacked cards had less depth to scan by in the
+      // dark than the light theme. This inset top highlight is cheap
+      // (no visible shadow silhouette, just a hairline of lift on the
+      // card's own top edge) so it doesn't fight the flat aesthetic.
+      className={`rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(9,23,43,0.04)] dark:border-zinc-800 dark:bg-zinc-900/60 dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] ${className}`}
       {...props}
     >
       {children}
@@ -71,7 +77,7 @@ export function SectionTitle({ children, hint }) {
       {hint && (
         <span
           title={hint}
-          className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-slate-300 text-[10px] font-semibold text-slate-400 dark:border-zinc-600 dark:text-zinc-500"
+          className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-slate-300 text-3xs font-semibold text-slate-400 dark:border-zinc-600 dark:text-zinc-500"
         >
           i
         </span>
@@ -98,10 +104,18 @@ export function Button({ variant = "secondary", className = "", children, ...pro
     ghost:
       "bg-transparent text-body-600 border-transparent hover:bg-slate-100 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100",
   }
+  // py-2.5 + leading-none (14px) + border measured out to ~36px tall —
+  // under the 44px minimum comfortable click/tap target. py-3 brings it
+  // to ~40px: a real improvement, not the full 44px, because this is a
+  // desktop mouse-driven tool where the data-dense dashboard aesthetic
+  // this app is styled after specifically calls for tight padding —
+  // going all the way to 44px would visibly chunk up every button on a
+  // page that's otherwise deliberately compact. Reconsider if this ever
+  // needs to work well on a touchscreen.
   return (
     <button
       type="button"
-      className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-5 py-2.5 text-sm font-semibold leading-none transition-colors disabled:cursor-not-allowed ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-full border px-5 py-3 text-sm font-semibold leading-none transition-colors disabled:cursor-not-allowed ${variants[variant]} ${className}`}
       {...props}
     >
       {children}
@@ -126,7 +140,7 @@ export function Pill({ tone = "slate", className = "", children }) {
   }
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${tones[tone] ?? tones.slate} ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-semibold whitespace-nowrap ${tones[tone] ?? tones.slate} ${className}`}
     >
       {children}
     </span>
@@ -162,7 +176,7 @@ export function LiveDot({ label = "Live", title }) {
   return (
     <span
       title={title}
-      className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400"
+      className="inline-flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400"
     >
       <span className="relative inline-flex h-2 w-2">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-70" />
@@ -188,16 +202,16 @@ export function StatTile({ label, value, sub, tone = "brand", onClick, className
   return (
     <Tag
       {...(onClick ? { type: "button", onClick } : {})}
-      className={`group flex flex-col rounded-xl border border-slate-200/80 bg-white p-5 text-left shadow-[0_1px_2px_rgba(9,23,43,0.04)] transition-all duration-200 ease-spring dark:border-zinc-800 dark:bg-zinc-900/60 dark:shadow-none ${
+      className={`group flex flex-col rounded-xl border border-slate-200/80 bg-white p-5 text-left shadow-[0_1px_2px_rgba(9,23,43,0.04)] transition-all duration-200 ease-spring dark:border-zinc-800 dark:bg-zinc-900/60 dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)] ${
         onClick ? "hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md dark:hover:border-brand-500/40" : ""
       } ${className}`}
     >
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-body-500 dark:text-zinc-400">{label}</p>
+      <p className="text-2xs font-semibold uppercase tracking-wider text-body-500 dark:text-zinc-400">{label}</p>
       <p className={`mt-2 text-4xl font-bold leading-none tabular-nums ${valueTones[tone] ?? valueTones.brand}`}>
         {value}
       </p>
       {sub && (
-        <p className="mt-2 text-[12.5px] leading-snug text-body-500 dark:text-zinc-500">
+        <p className="mt-2 text-xs leading-snug text-body-500 dark:text-zinc-500">
           {sub}
           {onClick && (
             <span className="ml-1 inline-block text-brand-600 opacity-0 transition-opacity group-hover:opacity-100 dark:text-brand-400">
@@ -232,9 +246,9 @@ export function GradientBanner({ tile, title, subtitle, aside, children }) {
         )}
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-2xl font-bold tracking-tight text-white sm:text-3xl">{title}</h1>
-          {subtitle && <p className="mt-1 truncate text-[13px] font-medium text-white/70">{subtitle}</p>}
+          {subtitle && <p className="mt-1 truncate text-dense font-medium text-white/70">{subtitle}</p>}
         </div>
-        {aside && <p className="max-w-xs text-[13px] leading-relaxed text-white/70">{aside}</p>}
+        {aside && <p className="max-w-xs text-dense leading-relaxed text-white/70">{aside}</p>}
         {children}
       </div>
     </div>
@@ -270,8 +284,8 @@ const SCORE_TONES = {
 // it cannot happen.
 export function ScoreBadge({ score, size = "md" }) {
   const sizes = {
-    sm: "h-7 w-7 text-[11px]",
-    md: "h-8 w-8 text-[12px]",
+    sm: "h-7 w-7 text-2xs",
+    md: "h-8 w-8 text-xs",
     lg: "h-11 w-11 text-[15px]",
   }
   return (
@@ -327,8 +341,8 @@ export function AccountAvatar({ name, size = "md" }) {
     .toUpperCase()
 
   const sizes = {
-    sm: "h-7 w-7 rounded-md text-[10px]",
-    md: "h-9 w-9 rounded-lg text-[12px]",
+    sm: "h-7 w-7 rounded-md text-3xs",
+    md: "h-9 w-9 rounded-lg text-xs",
     lg: "h-12 w-12 rounded-xl text-base",
     xl: "h-16 w-16 rounded-2xl text-2xl",
   }
@@ -357,7 +371,7 @@ export function TabStrip({ tabs, active, onChange, className = "" }) {
               type="button"
               onClick={() => onChange(tab.id)}
               aria-current={isActive ? "true" : undefined}
-              className={`relative inline-flex items-center gap-2 whitespace-nowrap px-3 py-2.5 text-[13px] font-semibold transition-colors ${
+              className={`relative inline-flex items-center gap-2 whitespace-nowrap px-3 py-2.5 text-dense font-semibold transition-colors ${
                 isActive
                   ? "text-brand-600 dark:text-brand-400"
                   : "text-body-600 hover:text-ink-900 dark:text-zinc-400 dark:hover:text-zinc-100"
@@ -372,7 +386,7 @@ export function TabStrip({ tabs, active, onChange, className = "" }) {
               {tab.label}
               {tab.count !== undefined && (
                 <span
-                  className={`inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums ${
+                  className={`inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1.5 text-3xs font-semibold tabular-nums ${
                     isActive
                       ? "bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
                       : "bg-slate-100 text-slate-500 dark:bg-zinc-800 dark:text-zinc-400"
@@ -406,7 +420,7 @@ export function SubNav({ tabs, active, onChange }) {
               key={tab.id}
               type="button"
               onClick={() => onChange(tab.id)}
-              className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
+              className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-dense font-semibold transition-colors ${
                 isActive
                   ? "bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
                   : "text-body-600 hover:bg-slate-100 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
@@ -431,7 +445,7 @@ export function FilterSelect({ label, value, options, onChange, className = "" }
         value={value ?? ""}
         onChange={(e) => onChange(e.target.value || null)}
         aria-label={label}
-        className={`w-full appearance-none rounded-lg border border-slate-200 bg-white py-2 pl-3 pr-8 text-[13px] outline-none transition-colors focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-900 ${
+        className={`w-full appearance-none rounded-lg border border-slate-200 bg-white py-2 pl-3 pr-8 text-dense outline-none transition-colors focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-900 ${
           value ? "text-ink-900 dark:text-zinc-100" : "text-slate-400 dark:text-zinc-500"
         }`}
       >
@@ -458,7 +472,7 @@ export function SearchInput({ value, onChange, placeholder = "Search...", classN
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-[13px] text-ink-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+        className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-dense text-ink-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500"
       />
     </div>
   )
@@ -484,7 +498,7 @@ export function Toggle({ checked, onChange, label }) {
           }`}
         />
       </span>
-      {label && <span className="text-[13px] text-body-600 dark:text-zinc-300">{label}</span>}
+      {label && <span className="text-dense text-body-600 dark:text-zinc-300">{label}</span>}
     </button>
   )
 }
@@ -495,13 +509,13 @@ export function Pagination({ page, pageSize, total, onPageChange, onPageSizeChan
   const lastPage = Math.max(0, Math.ceil(total / pageSize) - 1)
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 px-4 py-3 text-[12px] text-body-500 dark:text-zinc-400">
+    <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 px-4 py-3 text-xs text-body-500 dark:text-zinc-400">
       <label className="flex items-center gap-2">
         Rows per page:
         <select
           value={pageSize}
           onChange={(e) => onPageSizeChange(Number(e.target.value))}
-          className="rounded border border-slate-200 bg-white px-1.5 py-1 text-[12px] text-slate-700 outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+          className="rounded border border-slate-200 bg-white px-1.5 py-1 text-xs text-slate-700 outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
         >
           {[10, 25, 50, 100].map((size) => (
             <option key={size} value={size}>
@@ -558,7 +572,7 @@ export function NotIngested({ title, sources, note }) {
   return (
     <Card className="p-6">
       <p className="text-sm font-bold text-ink-900 dark:text-zinc-100">{title}</p>
-      <p className="mt-1.5 max-w-xl text-[13px] leading-relaxed text-body-600 dark:text-zinc-400">{note}</p>
+      <p className="mt-1.5 max-w-xl text-dense leading-relaxed text-body-600 dark:text-zinc-400">{note}</p>
       <div className="mt-3 flex flex-wrap gap-1.5">
         {sources.map((source) => (
           <Pill key={source} tone="slate">
@@ -574,7 +588,7 @@ export function NotIngested({ title, sources, note }) {
 // quieter than body text and separated by a hairline.
 export function SectionNote({ children }) {
   return (
-    <p className="mt-3 border-t border-slate-200 pt-3 text-[12px] leading-relaxed text-body-500 dark:border-zinc-800 dark:text-zinc-400">
+    <p className="mt-3 border-t border-slate-200 pt-3 text-xs leading-relaxed text-body-500 dark:border-zinc-800 dark:text-zinc-400">
       {children}
     </p>
   )
@@ -584,7 +598,7 @@ export function EmptyState({ title, description, action }) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
       <p className="text-sm font-bold text-ink-900 dark:text-zinc-100">{title}</p>
-      {description && <p className="mt-1 max-w-sm text-[13px] leading-relaxed text-body-600 dark:text-zinc-400">{description}</p>}
+      {description && <p className="mt-1 max-w-sm text-dense leading-relaxed text-body-600 dark:text-zinc-400">{description}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   )
@@ -662,9 +676,9 @@ export function Modal({ open, onClose, title, children, footer }) {
 export function Field({ label, hint, children }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[12px] font-medium text-body-500 dark:text-zinc-400">{label}</span>
+      <span className="mb-1.5 block text-xs font-medium text-body-500 dark:text-zinc-400">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-[11.5px] leading-relaxed text-body-500 dark:text-zinc-500">{hint}</span>}
+      {hint && <span className="mt-1 block text-2xs leading-relaxed text-body-500 dark:text-zinc-500">{hint}</span>}
     </label>
   )
 }
@@ -673,7 +687,7 @@ export function TextInput({ className = "", ...props }) {
   return (
     <input
       type="text"
-      className={`w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[13px] text-ink-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 ${className}`}
+      className={`w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-dense text-ink-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 ${className}`}
       {...props}
     />
   )
@@ -682,7 +696,7 @@ export function TextInput({ className = "", ...props }) {
 export function Textarea({ className = "", ...props }) {
   return (
     <textarea
-      className={`w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[13px] text-ink-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 ${className}`}
+      className={`w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-dense text-ink-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-500 ${className}`}
       {...props}
     />
   )
@@ -699,7 +713,7 @@ export function Radio({ name, value, checked, onChange, label }) {
         onChange={() => onChange(value)}
         className="h-4 w-4 accent-brand-600"
       />
-      <span className="text-[13px] text-body-600 dark:text-zinc-300">{label}</span>
+      <span className="text-dense text-body-600 dark:text-zinc-300">{label}</span>
     </label>
   )
 }

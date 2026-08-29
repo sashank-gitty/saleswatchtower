@@ -42,7 +42,7 @@ function CompetitorBlock({ competitor, onOpenSignal, onToggleReviewed }) {
   return (
     <div className="border-b border-slate-200 last:border-b-0 dark:border-zinc-800">
       <div className="flex items-start gap-3 bg-section px-4 py-2.5 dark:bg-zinc-900/40">
-        <span className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-[12px] font-bold text-slate-600 dark:bg-zinc-800 dark:text-zinc-300">
+        <span className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-600 dark:bg-zinc-800 dark:text-zinc-300">
           {competitor.name
             .replace(/[^a-zA-Z0-9 ]/g, "")
             .split(/\s+/)
@@ -53,8 +53,8 @@ function CompetitorBlock({ competitor, onOpenSignal, onToggleReviewed }) {
             .toUpperCase()}
         </span>
         <div className="min-w-0 flex-1">
-          <span className="truncate text-[13.5px] font-bold text-ink-900 dark:text-zinc-50">{competitor.name}</span>
-          <p className="mt-0.5 text-[11.5px] text-body-500 dark:text-zinc-500">{competitor.rollup}</p>
+          <span className="truncate text-dense font-bold text-ink-900 dark:text-zinc-50">{competitor.name}</span>
+          <p className="mt-0.5 text-2xs text-body-500 dark:text-zinc-500">{competitor.rollup}</p>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
           <Pill tone="slate">
@@ -83,7 +83,7 @@ function CompetitorBlock({ competitor, onOpenSignal, onToggleReviewed }) {
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="flex w-full items-center justify-center gap-1 px-4 py-2 text-[12px] font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100"
+          className="flex w-full items-center justify-center gap-1 px-4 py-2 text-xs font-medium text-slate-500 transition-colors hover:bg-slate-50 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800/40 dark:hover:text-zinc-100"
         >
           <ChevronDownIcon className={`h-3.5 w-3.5 transition-transform ${expanded ? "rotate-180" : ""}`} />
           {expanded ? "Show fewer" : `Show all ${competitor.signals.length} signals`}
@@ -184,7 +184,7 @@ function Competitors({ signals, companies = [], loading, onOpenSignal, onToggleR
             {quiet.map((c) => (
               <span
                 key={c.key}
-                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-[12.5px] font-medium text-body-600 dark:border-zinc-700 dark:text-zinc-300"
+                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-medium text-body-600 dark:border-zinc-700 dark:text-zinc-300"
               >
                 {c.name}
               </span>

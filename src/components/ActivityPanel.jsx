@@ -66,10 +66,10 @@ function ActivityPanel({ recentItems, metrics }) {
                 }`}
               />
               <div className="flex items-center gap-2">
-                <time className="font-mono text-[11px] font-semibold tabular-nums text-slate-400 dark:text-zinc-500">
+                <time className="font-mono text-2xs font-semibold tabular-nums text-slate-400 dark:text-zinc-500">
                   {formatShortDate(item.date)}
                 </time>
-                <span className={`rounded-full px-1.5 py-px text-[10px] font-semibold capitalize ${pillClassForScope(item.scope)}`}>
+                <span className={`rounded-full px-1.5 py-px text-3xs font-semibold capitalize ${pillClassForScope(item.scope)}`}>
                   {item.scope}
                 </span>
               </div>

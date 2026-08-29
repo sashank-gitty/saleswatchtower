@@ -58,8 +58,8 @@ function AgentCard({ icon: Icon, name, role, status, detail, tone }) {
       <div className="mb-3 flex items-center gap-3">
         <IconBadge icon={Icon} tone={config.badge} />
         <div className="min-w-0 flex-1">
-          <h3 className="text-[14px] font-bold text-ink-900 dark:text-zinc-50">{name}</h3>
-          <p className="text-[12px] text-body-500 dark:text-zinc-400">{role}</p>
+          <h3 className="text-sm font-bold text-ink-900 dark:text-zinc-50">{name}</h3>
+          <p className="text-xs text-body-500 dark:text-zinc-400">{role}</p>
         </div>
         {/* "Running" is the one state that earns a pulsing dot rather than
             a static pill: it is a claim about right now. */}
@@ -67,8 +67,8 @@ function AgentCard({ icon: Icon, name, role, status, detail, tone }) {
           <Pill tone={config.pill}>{config.label}</Pill>
         )}
       </div>
-      <p className="text-[12.5px] leading-relaxed text-body-500 dark:text-zinc-400">{detail}</p>
-      {status && <p className="mt-2 text-[12.5px] font-semibold text-body-600 dark:text-zinc-300">{status}</p>}
+      <p className="text-xs leading-relaxed text-body-500 dark:text-zinc-400">{detail}</p>
+      {status && <p className="mt-2 text-xs font-semibold text-body-600 dark:text-zinc-300">{status}</p>}
     </Card>
   )
 }
@@ -159,10 +159,10 @@ function Radar({ signals, companies = [], syncStatus, onOpenSignal, loading }) {
       <Card className="mb-8 flex flex-wrap items-center gap-4 p-5">
         <IconBadge icon={TargetIcon} tone="bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400" size="lg" />
         <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-bold text-ink-900 dark:text-zinc-50">
+          <p className="text-sm font-bold text-ink-900 dark:text-zinc-50">
             {competitorMovesThisWeek} competitor {competitorMovesThisWeek === 1 ? "move" : "moves"} this week
           </p>
-          <p className="mt-0.5 text-[12.5px] text-body-500 dark:text-zinc-400">
+          <p className="mt-0.5 text-xs text-body-500 dark:text-zinc-400">
             What the companies you compete with have been up to — for keeping your positioning current, not for outreach.
           </p>
         </div>
@@ -210,7 +210,7 @@ function Radar({ signals, companies = [], syncStatus, onOpenSignal, loading }) {
                     <div className="flex flex-wrap items-center gap-2">
                       <a
                         {...linkProps(`/accounts/${encodeURIComponent(account.key)}`)}
-                        className="text-[14px] font-bold text-ink-900 hover:text-brand-600 dark:text-zinc-50 dark:hover:text-brand-400"
+                        className="text-sm font-bold text-ink-900 hover:text-brand-600 dark:text-zinc-50 dark:hover:text-brand-400"
                       >
                         {account.name}
                       </a>
@@ -229,21 +229,21 @@ function Radar({ signals, companies = [], syncStatus, onOpenSignal, loading }) {
                       >
                         <IconBadge icon={Icon} tone={leadTone.badge} size="sm" className="mt-0.5" />
                         <span className="min-w-0 flex-1">
-                          <span className="block text-[13px] font-semibold text-ink-900 dark:text-zinc-200">
+                          <span className="block text-dense font-semibold text-ink-900 dark:text-zinc-200">
                             {lead.headline}
                           </span>
-                          <span className="mt-0.5 block line-clamp-2 text-[12px] text-body-500 dark:text-zinc-400">
+                          <span className="mt-0.5 block line-clamp-2 text-xs text-body-500 dark:text-zinc-400">
                             {lead.summary}
                           </span>
                           <span className="mt-1.5 inline-flex">
                             <span
-                              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${pillClassForSignalType(lead.signalType)}`}
+                              className={`rounded-full px-2 py-0.5 text-2xs font-semibold capitalize ${pillClassForSignalType(lead.signalType)}`}
                             >
                               {lead.signalType}
                             </span>
                           </span>
                         </span>
-                        <span className="flex-shrink-0 text-[12px] tabular-nums text-slate-400 dark:text-zinc-500">
+                        <span className="flex-shrink-0 text-xs tabular-nums text-slate-400 dark:text-zinc-500">
                           {formatDate(lead.date)}
                         </span>
                       </button>

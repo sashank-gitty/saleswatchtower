@@ -93,7 +93,7 @@ function CopyButton({ value, label = "Copy" }) {
       }}
       className="inline-flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-ink-900 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
     >
-      {copied ? <span className="text-[10px] font-semibold text-emerald-600">✓</span> : <CopyIcon className="h-4 w-4" />}
+      {copied ? <span className="text-3xs font-semibold text-emerald-600">✓</span> : <CopyIcon className="h-4 w-4" />}
     </button>
   )
 }
@@ -208,16 +208,16 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
         <div className="bg-gradient-brand relative flex flex-shrink-0 items-center gap-3 px-4 py-3.5">
           <AccountAvatar name={account} size="sm" />
           <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-1.5 truncate text-[13.5px] font-bold text-white">
+            <p className="flex items-center gap-1.5 truncate text-dense font-bold text-white">
               {account}
               {isCompetitor && (
-                <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
+                <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-3xs font-semibold uppercase tracking-wide text-white">
                   <TargetIcon className="h-2.5 w-2.5" />
                   Competitor
                 </span>
               )}
             </p>
-            <time className="text-[12px] tabular-nums text-white/70">{formatDate(item.date)}</time>
+            <time className="text-xs tabular-nums text-white/70">{formatDate(item.date)}</time>
           </div>
           <button
             type="button"
@@ -252,7 +252,7 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
             <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${reasonTone.dot}`} aria-hidden="true" />
             {reason.label}
           </p>
-          <p className="mt-1.5 text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">
+          <p className="mt-1.5 text-dense leading-relaxed text-body-600 dark:text-zinc-300">
             <span className="font-bold text-ink-900 dark:text-zinc-100">Do this:</span> {actionForReason(reason, item)}
           </p>
 
@@ -260,10 +260,10 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
               Type, Topics, Date and Source are each findable by position. */}
           <dl className="mt-4 space-y-2.5 border-y border-slate-200 py-4 dark:border-zinc-800">
             <div className="flex gap-4">
-              <dt className="w-20 flex-shrink-0 text-[12px] text-body-500 dark:text-zinc-400">Type</dt>
+              <dt className="w-20 flex-shrink-0 text-xs text-body-500 dark:text-zinc-400">Type</dt>
               <dd className="flex flex-wrap gap-1">
                 <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${groupTone.pill}`}
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-2xs font-semibold capitalize ${groupTone.pill}`}
                 >
                   <Icon className="h-3 w-3" />
                   {item.signalType}
@@ -272,7 +272,7 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
               </dd>
             </div>
             <div className="flex gap-4">
-              <dt className="w-20 flex-shrink-0 text-[12px] text-body-500 dark:text-zinc-400">Relevance</dt>
+              <dt className="w-20 flex-shrink-0 text-xs text-body-500 dark:text-zinc-400">Relevance</dt>
               <dd>
                 <Pill tone={relevanceTone(item.outreachRelevance)}>
                   {item.outreachRelevance ? `${RELEVANCE_LABELS[item.outreachRelevance]} · ${item.outreachRelevance}/5` : "Unscored"}
@@ -280,17 +280,17 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
               </dd>
             </div>
             <div className="flex gap-4">
-              <dt className="w-20 flex-shrink-0 text-[12px] text-body-500 dark:text-zinc-400">Date</dt>
-              <dd className="text-[12px] tabular-nums text-ink-900 dark:text-zinc-100">{formatDate(item.date)}</dd>
+              <dt className="w-20 flex-shrink-0 text-xs text-body-500 dark:text-zinc-400">Date</dt>
+              <dd className="text-xs tabular-nums text-ink-900 dark:text-zinc-100">{formatDate(item.date)}</dd>
             </div>
             <div className="flex gap-4">
-              <dt className="w-20 flex-shrink-0 text-[12px] text-body-500 dark:text-zinc-400">Source</dt>
+              <dt className="w-20 flex-shrink-0 text-xs text-body-500 dark:text-zinc-400">Source</dt>
               <dd>
                 <a
                   href={item.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-[12px] text-brand-600 hover:underline dark:text-brand-400"
+                  className="inline-flex items-center gap-1 text-xs text-brand-600 hover:underline dark:text-brand-400"
                 >
                   {domainFromUrl(item.sourceUrl)}
                   <ExternalLinkIcon className="h-3 w-3" />
@@ -298,7 +298,7 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
               </dd>
             </div>
             <div className="flex gap-4">
-              <dt className="w-20 flex-shrink-0 text-[12px] text-body-500 dark:text-zinc-400">Origin</dt>
+              <dt className="w-20 flex-shrink-0 text-xs text-body-500 dark:text-zinc-400">Origin</dt>
               <dd>
                 <span
                   title={
@@ -308,17 +308,17 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
                         ? "Loaded from the initial seed set, not a live ingest run"
                         : "Found by the standing daily news pipeline"
                   }
-                  className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold capitalize text-slate-600 dark:bg-zinc-800 dark:text-zinc-300"
+                  className="rounded-full bg-slate-100 px-2 py-0.5 text-2xs font-semibold capitalize text-slate-600 dark:bg-zinc-800 dark:text-zinc-300"
                 >
                   {item.origin ?? "news"}
                 </span>
               </dd>
             </div>
             <div className="flex gap-4">
-              <dt className="w-20 flex-shrink-0 text-[12px] text-body-500 dark:text-zinc-400">Scope</dt>
+              <dt className="w-20 flex-shrink-0 text-xs text-body-500 dark:text-zinc-400">Scope</dt>
               <dd className="flex flex-wrap gap-1">
                 <span
-                  className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${pillClassForScope(item.scope)}`}
+                  className={`rounded-full px-2 py-0.5 text-2xs font-semibold capitalize ${pillClassForScope(item.scope)}`}
                 >
                   {item.scope}
                 </span>
@@ -327,7 +327,7 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
           </dl>
 
           <Collapsible title="Smart Summary" action={<CopyButton value={item.summary} label="Copy summary" />}>
-            <p className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">
+            <p className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">
               {markMatches(item.summary, term, counter)}
             </p>
           </Collapsible>
@@ -345,26 +345,26 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
             <Collapsible title="What This Means For Positioning" defaultOpen>
               <div className="space-y-4">
                 <div>
-                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                  <p className="mb-1 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
                     Why it matters
                   </p>
-                  <p className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">{positioningRead(item)}</p>
+                  <p className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">{positioningRead(item)}</p>
                 </div>
                 <div>
-                  <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                  <p className="mb-1 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
                     <TargetIcon className="h-3.5 w-3.5" />
                     What to watch next
                   </p>
-                  <p className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">{competitiveWatch(item)}</p>
+                  <p className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">{competitiveWatch(item)}</p>
                 </div>
                 <div>
-                  <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                  <p className="mb-1.5 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
                     <LightbulbIcon className="h-3.5 w-3.5" />
                     How this updates your positioning
                   </p>
                   <ul className="space-y-2.5">
                     {differentiationAngles(item).map((a, i) => (
-                      <li key={i} className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">
+                      <li key={i} className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">
                         <span className="font-bold text-ink-900 dark:text-zinc-100">{a.label}.</span> {a.angle}
                       </li>
                     ))}
@@ -376,26 +376,26 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
             <Collapsible title="What This Means" defaultOpen>
               <div className="space-y-4">
                 <div>
-                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                  <p className="mb-1 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
                     For the account
                   </p>
-                  <p className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">{accountImpact(item)}</p>
+                  <p className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">{accountImpact(item)}</p>
                 </div>
                 <div>
-                  <p className="mb-1 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                  <p className="mb-1 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
                     <UsersIcon className="h-3.5 w-3.5" />
                     Who this affects
                   </p>
-                  <p className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">{whoThisAffects(item)}</p>
+                  <p className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">{whoThisAffects(item)}</p>
                 </div>
                 <div>
-                  <p className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                  <p className="mb-1.5 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
                     <LightbulbIcon className="h-3.5 w-3.5" />
                     Angles to approach with
                   </p>
                   <ul className="space-y-2.5">
                     {outreachAngles(item, trackedCompany?.status ?? null).map((a, i) => (
-                      <li key={i} className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">
+                      <li key={i} className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">
                         <span className="font-bold text-ink-900 dark:text-zinc-100">{a.label}.</span> {a.angle}
                       </li>
                     ))}
@@ -408,10 +408,10 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
           {tierText && (
             <Collapsible title={`Why this scored ${item.outreachRelevance}`} defaultOpen={(item.outreachRelevance ?? 0) >= 4}>
               <div className="space-y-2.5">
-                <p className="text-[13px] leading-relaxed text-body-600 dark:text-zinc-300">
+                <p className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">
                   {scoreMeaning(item.outreachRelevance ?? null)}
                 </p>
-                <p className="text-[13px] leading-relaxed text-body-500 dark:text-zinc-400">
+                <p className="text-dense leading-relaxed text-body-500 dark:text-zinc-400">
                   {markMatches(tierText, term, counter)}
                 </p>
               </div>
@@ -420,7 +420,7 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
 
           {matchedCompanies.length > 0 && (
             <Collapsible title="Tracked Companies" defaultOpen>
-              <dl className="space-y-2 text-[13px]">
+              <dl className="space-y-2 text-dense">
                 <div className="flex gap-3">
                   <dt className="w-20 flex-shrink-0 text-body-500 dark:text-zinc-400">Companies</dt>
                   <dd className="text-ink-900 dark:text-zinc-100">{matchedCompanies.join(", ")}</dd>
@@ -443,9 +443,9 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
                     key={related.id}
                     type="button"
                     onClick={() => onSelectRelated(related.id)}
-                    className="flex items-start gap-2 rounded-md px-2 py-1.5 text-left text-[13px] text-body-600 transition-colors hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80"
+                    className="flex items-start gap-2 rounded-md px-2 py-1.5 text-left text-dense text-body-600 transition-colors hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80"
                   >
-                    <time className="flex-shrink-0 text-[11px] tabular-nums text-slate-400 dark:text-zinc-500">
+                    <time className="flex-shrink-0 text-2xs tabular-nums text-slate-400 dark:text-zinc-500">
                       {formatDate(related.date)}
                     </time>
                     <span className="min-w-0 flex-1">
@@ -489,9 +489,9 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
                 if (e.key === "Enter") step(e.shiftKey ? -1 : 1)
               }}
               placeholder="Find in this signal"
-              className="min-w-0 flex-1 bg-transparent text-[13px] text-ink-900 outline-none placeholder:text-slate-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+              className="min-w-0 flex-1 bg-transparent text-dense text-ink-900 outline-none placeholder:text-slate-400 dark:text-zinc-100 dark:placeholder:text-zinc-500"
             />
-            <span className="flex-shrink-0 text-[12px] tabular-nums text-body-500 dark:text-zinc-400">
+            <span className="flex-shrink-0 text-xs tabular-nums text-body-500 dark:text-zinc-400">
               {matchCount === 0 ? (term ? "0/0" : "") : `${activeMatch + 1}/${matchCount}`}
             </span>
             <button
@@ -528,7 +528,7 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
           <button
             type="button"
             onClick={() => onToggleReviewed(item.id)}
-            className={`rounded-full border px-4 py-2 text-[13px] font-semibold transition-colors ${
+            className={`rounded-full border px-4 py-2 text-dense font-semibold transition-colors ${
               item.reviewed
                 ? "border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
                 : "border-slate-200 text-slate-600 hover:border-slate-300 hover:text-ink-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:text-zinc-100"
@@ -540,7 +540,7 @@ function SignalDetailPanel({ item, open, onClose, onToggleReviewed, relatedItems
             href={item.sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-navy-900 px-4 py-2 text-[13px] font-semibold text-white transition-colors hover:bg-navy-800 dark:bg-brand-600 dark:hover:bg-brand-500"
+            className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-navy-900 px-4 py-2 text-dense font-semibold text-white transition-colors hover:bg-navy-800 dark:bg-brand-600 dark:hover:bg-brand-500"
           >
             Open source
             <ExternalLinkIcon className="h-3.5 w-3.5" />

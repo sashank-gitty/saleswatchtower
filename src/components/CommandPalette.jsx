@@ -107,7 +107,7 @@ function CommandPalette({ open, onClose, items, onSelectItem, onClearFilters, on
         <div className="max-h-80 overflow-y-auto p-2">
           {matchingItems.length > 0 && (
             <div className="mb-1">
-              <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Signals</p>
+              <p className="px-2 py-1 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Signals</p>
               {matchingItems.map((item) => {
                 const entryIndex = entries.findIndex((e) => e.type === "item" && e.id === item.id)
                 return (
@@ -123,7 +123,7 @@ function CommandPalette({ open, onClose, items, onSelectItem, onClearFilters, on
                         : "text-body-600 hover:bg-slate-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
                     }`}
                   >
-                    <span className={`rounded-sm px-1.5 py-0.5 text-[10px] font-semibold capitalize ${pillClassForScope(item.scope)}`}>
+                    <span className={`rounded-sm px-1.5 py-0.5 text-3xs font-semibold capitalize ${pillClassForScope(item.scope)}`}>
                       {item.scope}
                     </span>
                     <span className="truncate">{item.headline}</span>
@@ -135,7 +135,7 @@ function CommandPalette({ open, onClose, items, onSelectItem, onClearFilters, on
 
           {actions.length > 0 && (
             <div>
-              <p className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Actions</p>
+              <p className="px-2 py-1 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Actions</p>
               {actions.map((action) => {
                 const entryIndex = entries.findIndex((e) => e.type === "action" && e.id === action.id)
                 return (
@@ -163,7 +163,7 @@ function CommandPalette({ open, onClose, items, onSelectItem, onClearFilters, on
           )}
         </div>
 
-        <div className="flex items-center gap-3 border-t border-slate-200 px-3 py-1.5 text-[11px] text-slate-400 dark:border-zinc-800 dark:text-zinc-500">
+        <div className="flex items-center gap-3 border-t border-slate-200 px-3 py-1.5 text-2xs text-slate-400 dark:border-zinc-800 dark:text-zinc-500">
           <span><kbd className="font-mono">&uarr;&darr;</kbd> navigate</span>
           <span><kbd className="font-mono">&crarr;</kbd> select</span>
           <span><kbd className="font-mono">esc</kbd> close</span>

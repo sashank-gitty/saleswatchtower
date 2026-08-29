@@ -25,7 +25,7 @@ export function CitationBadge({ signal, index, onOpen }) {
       type="button"
       onClick={() => onOpen(signal.id)}
       title={`${signal.headline} — ${signal.date}`}
-      className={`ml-1 inline-flex translate-y-[-1px] items-center gap-0.5 rounded-full px-1.5 py-px align-middle text-[10px] font-bold tabular-nums transition-opacity hover:opacity-75 ${tone.pill}`}
+      className={`ml-1 inline-flex translate-y-[-1px] items-center gap-0.5 rounded-full px-1.5 py-px align-middle text-3xs font-bold tabular-nums transition-opacity hover:opacity-75 ${tone.pill}`}
     >
       <Icon className="h-2.5 w-2.5" />
       {index}

@@ -267,7 +267,7 @@ function App() {
         {route.page === "not-found" && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <p className="text-sm font-semibold text-ink-900 dark:text-zinc-100">Page not found</p>
-            <p className="mt-1 text-[13px] text-body-500 dark:text-zinc-400">
+            <p className="mt-1 text-dense text-body-500 dark:text-zinc-400">
               {window.location.pathname} doesn&rsquo;t match any route.
             </p>
             <Button variant="primary" className="mt-4" onClick={() => navigate("/feed")}>

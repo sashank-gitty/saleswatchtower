@@ -72,7 +72,7 @@ function HeroSummary({ metrics, view, onViewChange, onOpenSignal }) {
           onClick={() => onOpenSignal(top.id)}
           className="group mt-4 flex w-full items-center gap-2.5 rounded-lg border border-slate-200 bg-slate-50/80 px-3 py-2.5 text-left transition-colors hover:border-brand-500/30 hover:bg-brand-500/5 dark:border-zinc-800 dark:bg-zinc-950/40"
         >
-          <span className="flex-shrink-0 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+          <span className="flex-shrink-0 text-3xs font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
             Start here
           </span>
           <span className={`h-2 w-2 flex-shrink-0 rounded-full ${toneStyles.dot}`} aria-hidden="true" />

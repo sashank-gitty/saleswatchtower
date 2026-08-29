@@ -65,12 +65,12 @@ function FilterSection({ title, options, selected, onToggle, colorFor, labelFor 
         aria-expanded={open}
         className="flex w-full items-center gap-2 text-left text-sm font-semibold text-body-600 dark:text-zinc-200"
       >
-        <span className={`inline-block text-[10px] text-slate-400 transition-transform duration-200 ease-spring dark:text-zinc-500 ${open ? "rotate-90" : ""}`}>
+        <span className={`inline-block text-3xs text-slate-400 transition-transform duration-200 ease-spring dark:text-zinc-500 ${open ? "rotate-90" : ""}`}>
           &#9656;
         </span>
         <span className="flex-1">{title}</span>
         {selected.length > 0 && (
-          <span className="rounded-full bg-brand-500/10 px-1.5 py-0.5 text-[11px] font-semibold text-brand-600 dark:text-brand-400">
+          <span className="rounded-full bg-brand-500/10 px-1.5 py-0.5 text-2xs font-semibold text-brand-600 dark:text-brand-400">
             {selected.length}
           </span>
         )}
@@ -94,7 +94,7 @@ function FilterSection({ title, options, selected, onToggle, colorFor, labelFor 
               visibleOptions.map((option) => (
                 <label
                   key={option}
-                  className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-[13px] text-slate-600 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80"
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-dense text-slate-600 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80"
                 >
                   <input
                     type="checkbox"
@@ -141,7 +141,7 @@ function ScopeControl({ scopeFilter, scopeCounts, onScopeChange }) {
             }`}
           >
             {option.label}{" "}
-            <span className="font-mono text-[10px] tabular-nums text-slate-400 dark:text-zinc-500">
+            <span className="font-mono text-3xs tabular-nums text-slate-400 dark:text-zinc-500">
               ({scopeCounts[option.id] ?? 0})
             </span>
           </button>
@@ -257,7 +257,7 @@ function Sidebar({
       <div className="mb-1 flex items-center gap-2 pb-3">
         <span className="text-xs font-semibold uppercase tracking-wider text-body-500 dark:text-zinc-400">Filters</span>
         {activeFilterCount > 0 && (
-          <span className="rounded-full bg-brand-500/10 px-1.5 py-0.5 text-[11px] font-semibold text-brand-600 dark:text-brand-400">
+          <span className="rounded-full bg-brand-500/10 px-1.5 py-0.5 text-2xs font-semibold text-brand-600 dark:text-brand-400">
             {activeFilterCount}
           </span>
         )}

@@ -22,7 +22,7 @@ const LEGEND_ENTRIES = [
 function TagLegend() {
   return (
     <div className="mb-3 rounded-lg border border-slate-200 bg-white/60 p-3 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/60">
-      <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+      <p className="mb-1 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
         Colors
       </p>
       {LEGEND_ENTRIES.map((entry) => (

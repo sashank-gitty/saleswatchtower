@@ -113,7 +113,7 @@ function Header({
                 <XIcon className="h-3.5 w-3.5" />
               </button>
             ) : (
-              <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-400 sm:inline dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500">
+              <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono text-3xs font-semibold text-slate-400 sm:inline dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-500">
                 /
               </kbd>
             )}
@@ -125,7 +125,7 @@ function Header({
             className="hidden shrink-0 items-center gap-2 rounded-md border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-500 transition-all hover:border-slate-300 hover:text-ink-900 lg:inline-flex dark:border-zinc-800 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:text-zinc-100"
           >
             Jump to
-            <kbd className="rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+            <kbd className="rounded border border-slate-300 bg-white px-1.5 py-0.5 font-mono text-3xs font-semibold text-slate-500 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
               &#8984;K
             </kbd>
           </button>
@@ -142,7 +142,7 @@ function Header({
           <FilterIcon className="h-3.5 w-3.5" />
           Filters
           {activeFilterCount > 0 && (
-            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500/10 px-1 text-[10px] font-semibold text-brand-600 dark:text-brand-400">
+            <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500/10 px-1 text-3xs font-semibold text-brand-600 dark:text-brand-400">
               {activeFilterCount}
             </span>
           )}

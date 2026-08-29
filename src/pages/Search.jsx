@@ -71,10 +71,10 @@ function CreateAlertModal({ open, onClose, onCreate, query, days, group }) {
       <div className="mb-5 flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 dark:border-zinc-800 dark:bg-zinc-800/40">
         <AlertIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-400 dark:text-zinc-500" />
         <div className="min-w-0">
-          <p className="truncate text-[13px] font-semibold text-ink-900 dark:text-zinc-100">
+          <p className="truncate text-dense font-semibold text-ink-900 dark:text-zinc-100">
             {query ? `"${query}"` : "All signals"}
           </p>
-          <p className="text-[12px] text-body-500 dark:text-zinc-400">in the {rangeLabel}</p>
+          <p className="text-xs text-body-500 dark:text-zinc-400">in the {rangeLabel}</p>
         </div>
       </div>
 
@@ -84,7 +84,7 @@ function CreateAlertModal({ open, onClose, onCreate, query, days, group }) {
         </Field>
 
         <div>
-          <p className="mb-1.5 text-[12px] font-medium text-body-500 dark:text-zinc-400">Alert Frequency</p>
+          <p className="mb-1.5 text-xs font-medium text-body-500 dark:text-zinc-400">Alert Frequency</p>
           <div className="space-y-2">
             <Radio name="frequency" value="daily" checked={frequency === "daily"} onChange={setFrequency} label="Daily" />
             <Radio name="frequency" value="weekly" checked={frequency === "weekly"} onChange={setFrequency} label="Weekly" />
@@ -99,7 +99,7 @@ function CreateAlertModal({ open, onClose, onCreate, query, days, group }) {
 
         {/* Saying this here, at the point of promise, rather than in a
             help page nobody opens. */}
-        <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[12px] leading-relaxed text-amber-700 dark:text-amber-400">
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs leading-relaxed text-amber-700 dark:text-amber-400">
           Saved locally to this browser. The query is stored and re-run live on the Alerts page &mdash; but no email is
           sent yet: delivery needs a scheduled server job, which doesn&rsquo;t exist in this deployment.
         </p>
@@ -234,17 +234,17 @@ function Search({ signals, companies = [], onOpenSignal }) {
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <a
                           {...linkProps(`/accounts/${encodeURIComponent(accountKey(account))}`)}
-                          className="text-[13px] font-semibold text-slate-900 hover:text-brand-600 dark:text-zinc-100 dark:hover:text-brand-400"
+                          className="text-dense font-semibold text-slate-900 hover:text-brand-600 dark:text-zinc-100 dark:hover:text-brand-400"
                         >
                           {account}
                         </a>
                         <span
-                          className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-medium ${pillClassForSignalType(signal.signalType)}`}
+                          className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-2xs font-medium ${pillClassForSignalType(signal.signalType)}`}
                         >
                           <Icon className="h-3 w-3" />
                           {signal.signalType}
                         </span>
-                        <span className="text-[12px] tabular-nums text-slate-400 dark:text-zinc-500">
+                        <span className="text-xs tabular-nums text-slate-400 dark:text-zinc-500">
                           {formatDate(signal.date)}
                         </span>
                       </div>
@@ -253,10 +253,10 @@ function Search({ signals, companies = [], onOpenSignal }) {
                         onClick={() => onOpenSignal(signal.id)}
                         className="mt-1 block w-full text-left"
                       >
-                        <span className="block text-[13px] font-medium text-slate-800 dark:text-zinc-200">
+                        <span className="block text-dense font-medium text-slate-800 dark:text-zinc-200">
                           <Highlight text={signal.headline} term={term} />
                         </span>
-                        <span className="mt-0.5 block line-clamp-2 text-[12px] leading-relaxed text-body-500 dark:text-zinc-400">
+                        <span className="mt-0.5 block line-clamp-2 text-xs leading-relaxed text-body-500 dark:text-zinc-400">
                           <Highlight text={signal.summary} term={term} />
                         </span>
                       </button>

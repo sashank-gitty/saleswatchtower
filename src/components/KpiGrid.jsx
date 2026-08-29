@@ -54,7 +54,7 @@ function KpiCard({ label, value, sub, children, featured = false, accent = "bran
           : "border-slate-200 hover:border-slate-300 dark:border-zinc-800 dark:hover:border-zinc-700"
       }`}
     >
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-body-500 dark:text-zinc-400">{label}</p>
+      <p className="text-2xs font-semibold uppercase tracking-wider text-body-500 dark:text-zinc-400">{label}</p>
       <p
         className={`mt-2 font-bold leading-none tabular-nums ${
           featured ? `text-5xl ${accentStyles.value}` : "text-4xl text-ink-900 dark:text-zinc-50"

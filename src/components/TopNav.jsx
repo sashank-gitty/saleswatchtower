@@ -58,7 +58,7 @@ function NavLink({ item, active }) {
     <a
       {...linkProps(href)}
       aria-current={active ? "page" : undefined}
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-[13px] font-semibold transition-colors ${
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-dense font-semibold transition-colors ${
         active
           ? "bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
           : "text-body-600 hover:bg-slate-100 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
@@ -134,11 +134,11 @@ function TopNav({
           <button
             type="button"
             onClick={onOpenPalette}
-            className="inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-1.5 text-[13px] font-semibold text-body-500 transition-colors hover:bg-slate-100 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
+            className="inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-1.5 text-dense font-semibold text-body-500 transition-colors hover:bg-slate-100 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
           >
             <SearchIcon className="h-4 w-4" />
             <span className="hidden sm:inline">Search</span>
-            <kbd className="hidden rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-slate-500 lg:inline dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+            <kbd className="hidden rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 font-mono text-3xs font-semibold text-slate-500 lg:inline dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
               &#8984;K
             </kbd>
           </button>
@@ -160,7 +160,7 @@ function TopNav({
           >
             <BellIcon className="h-[18px] w-[18px]" />
             {unreadCount > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-zinc-950">
+              <span className="absolute -right-0.5 -top-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-3xs font-bold text-white ring-2 ring-white dark:ring-zinc-950">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
@@ -173,10 +173,10 @@ function TopNav({
               Change ORG_NAME in src/config.js when you move employers
               and this updates everywhere it's shown. */}
           <div className="ml-1 flex items-center gap-2">
-            <p className="hidden whitespace-nowrap text-[13px] font-bold text-ink-900 2xl:block dark:text-zinc-50">
+            <p className="hidden whitespace-nowrap text-dense font-bold text-ink-900 2xl:block dark:text-zinc-50">
               {orgName}
             </p>
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-navy-900 text-[13px] font-bold text-white">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-navy-900 text-dense font-bold text-white">
               {orgInitials(orgName)}
             </div>
           </div>

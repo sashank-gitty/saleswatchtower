@@ -103,7 +103,7 @@ function VolumeChart({ buckets }) {
         />
       </svg>
 
-      <div className="mt-1 flex justify-between text-[11px] font-medium tabular-nums text-slate-400 dark:text-zinc-500">
+      <div className="mt-1 flex justify-between text-2xs font-medium tabular-nums text-slate-400 dark:text-zinc-500">
         <span>{formatShortDate(first.date)}</span>
         <span>{formatShortDate(mid.date)}</span>
         <span>{formatShortDate(last.date)}</span>

@@ -108,7 +108,7 @@ function SignalRow({
           {formatShortDate(item.date)}
         </time>
         <span
-          className={`hidden w-28 flex-shrink-0 truncate rounded-full px-2 py-0.5 text-center text-[11px] font-semibold capitalize md:inline-block ${pillClassForSignalType(item.signalType)}`}
+          className={`hidden w-28 flex-shrink-0 truncate rounded-full px-2 py-0.5 text-center text-2xs font-semibold capitalize md:inline-block ${pillClassForSignalType(item.signalType)}`}
         >
           {item.signalType}
         </span>
@@ -190,14 +190,14 @@ function SignalRow({
           {isCommunity && (
             <span
               title="Sourced from community research (last30days), not the news pipeline"
-              className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-zinc-800 dark:text-zinc-300"
+              className="rounded-full bg-slate-100 px-2 py-0.5 text-2xs font-semibold text-slate-600 dark:bg-zinc-800 dark:text-zinc-300"
             >
               Community
             </span>
           )}
           <span
             title={`Signal type: ${item.signalType}`}
-            className={`rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${pillClassForSignalType(item.signalType)}`}
+            className={`rounded-full px-2 py-0.5 text-2xs font-semibold capitalize ${pillClassForSignalType(item.signalType)}`}
           >
             {item.signalType}
           </span>
@@ -229,14 +229,14 @@ function SignalRow({
         <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-body-600 dark:text-zinc-400">{item.summary}</p>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-ink-900 dark:bg-zinc-800 dark:text-zinc-200">
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-2xs font-semibold text-ink-900 dark:bg-zinc-800 dark:text-zinc-200">
             {item.entity}
           </span>
 
           {matchedCompanies.length > 0 && (
             <span
               title={`On your tracked list: ${matchedCompanies.join(", ")}`}
-              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${pillClassForAccountStatus(null)}`}
+              className={`rounded-full px-2 py-0.5 text-2xs font-semibold ${pillClassForAccountStatus(null)}`}
             >
               Tracked{matchedCompanies.length > 1 ? ` · +${matchedCompanies.length - 1}` : ""}
             </span>
@@ -245,7 +245,7 @@ function SignalRow({
           {isUnassigned && (
             <span
               title="Not yet tracked — this company doesn't match anything on your list"
-              className="rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-semibold text-brand-800 dark:bg-brand-500/15 dark:text-brand-300"
+              className="rounded-full bg-brand-100 px-2 py-0.5 text-2xs font-semibold text-brand-800 dark:bg-brand-500/15 dark:text-brand-300"
             >
               Not tracked
             </span>

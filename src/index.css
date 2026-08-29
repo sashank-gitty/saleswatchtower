@@ -47,7 +47,13 @@
   --color-ink-900: #09172b;
   --color-ink-700: #1e2f47;
   --color-body-600: #41566c;
-  --color-body-500: #6a7c92;
+  /* Was #6a7c92 (4.13:1 on --color-page) — fails WCAG AA's 4.5:1 for
+     normal text, and this is used at 11-13px everywhere (labels, hints,
+     footnotes), sizes small enough that the strict threshold applies.
+     #607288 measures 4.76:1 against --color-page: same blue-slate
+     direction, enough darker to pass with a small margin, still visibly
+     lighter than body-600 so the two-tier system still reads as two tiers. */
+  --color-body-500: #607288;
 
   --color-page: #fafbfc;
   --color-section: #f8fafc;
@@ -59,6 +65,26 @@
   --text-hero: 48px;
   --text-hero--line-height: 51.84px;
   --text-hero--font-weight: 700;
+
+  /* The small end of the type scale, named rather than left as one-off
+     arbitrary values — there were 11 distinct text-[Npx] sizes in active
+     use before this, several a half-pixel apart (12 vs 12.5, 13 vs 13.5,
+     11 vs 11.5) purely from drift, not intent. Consolidated onto these
+     three plus Tailwind's own stock text-xs (12px) and text-sm (14px),
+     which several call sites were already using in parallel with the
+     arbitrary values for the same visual size. No line-height paired
+     here, matching how the arbitrary values behaved: font-size only,
+     leading still comes from whatever `leading-*` utility is applied
+     alongside each usage.
+
+     text-dense, not text-body — this app already has text-body-500/600
+     as COLOR tokens (see above), and "text-body text-body-500" side by
+     side read like a typo for one class repeated. text-dense names what
+     this size actually is: the base copy size for a deliberately
+     data-dense dashboard. */
+  --text-3xs: 10px;
+  --text-2xs: 11px;
+  --text-dense: 13px;
 }
 
 @layer base {

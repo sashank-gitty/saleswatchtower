@@ -30,7 +30,7 @@ function DensityToggle({ density, onDensityChange }) {
           onClick={() => onDensityChange(option.id)}
           aria-pressed={density === option.id}
           title={option.id === "compact" ? "Dense, table-style rows for fast scanning" : "Roomy cards with full context"}
-          className={`px-2 py-1 text-[11px] font-semibold transition-colors ${
+          className={`px-2 py-1 text-2xs font-semibold transition-colors ${
             density === option.id
               ? "bg-brand-500/10 text-brand-600 dark:text-brand-400"
               : "text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
@@ -155,7 +155,7 @@ function SignalQueue({
       {legendOpen && <TagLegend />}
 
       {compact && !loading && items.length > 0 && (
-        <div className="mb-1.5 flex items-center gap-3 px-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+        <div className="mb-1.5 flex items-center gap-3 px-3 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
           <span className="h-3.5 w-3.5 flex-shrink-0" />
           <span className="h-2 w-2 flex-shrink-0" />
           <span className="hidden w-16 flex-shrink-0 sm:block">Date</span>

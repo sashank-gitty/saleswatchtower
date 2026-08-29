@@ -59,7 +59,7 @@ function ColumnsMenu({ columns, visible, onToggle }) {
             {columns.map((column) => (
               <label
                 key={column.id}
-                className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13px] ${
+                className={`flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-dense ${
                   column.always
                     ? "cursor-not-allowed text-slate-400 dark:text-zinc-600"
                     : "cursor-pointer text-body-600 hover:bg-slate-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -154,7 +154,7 @@ function AccountsTable({
   return (
     <Card className="overflow-hidden">
       <div className="flex items-center justify-between border-b border-slate-200 px-3 py-2 dark:border-zinc-800">
-        <p className="px-1 text-[12px] text-body-500 dark:text-zinc-400">
+        <p className="px-1 text-xs text-body-500 dark:text-zinc-400">
           <span className="font-bold tabular-nums text-ink-900 dark:text-zinc-100">{accounts.length}</span>{" "}
           {accounts.length === 1 ? "account" : "accounts"}
         </p>
@@ -174,8 +174,8 @@ function AccountsTable({
         <EmptyState title={emptyTitle} description={emptyDescription} />
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-[13px]">
-            <thead className="border-b border-slate-200 bg-section text-[11px] uppercase tracking-wider text-slate-500 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400">
+          <table className="w-full min-w-[820px] text-dense">
+            <thead className="border-b border-slate-200 bg-section text-2xs uppercase tracking-wider text-slate-500 dark:border-zinc-800 dark:bg-zinc-900/40 dark:text-zinc-400">
               <tr>
                 <SortHeader id="name" label="Name" className="pl-4" />
                 {shows("type") && <SortHeader id="type" label="Type" />}
@@ -222,7 +222,7 @@ function AccountsTable({
                     <td className="px-3 py-2.5 tabular-nums text-body-600 dark:text-zinc-300">
                       {account.signalCount}
                       {account.highRelevanceCount > 0 && (
-                        <span className="ml-1.5 text-[11px] font-semibold text-brand-600 dark:text-brand-400">
+                        <span className="ml-1.5 text-2xs font-semibold text-brand-600 dark:text-brand-400">
                           {account.highRelevanceCount} high
                         </span>
                       )}
