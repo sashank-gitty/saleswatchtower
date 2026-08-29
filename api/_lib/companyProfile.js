@@ -35,26 +35,44 @@ export async function researchCompanyProfile(companyName) {
     throw new BudgetExceededError(spend)
   }
 
-  // A 45s request timeout, well under Vercel's 60s hard maxDuration for
-  // this route (vercel.json — the Hobby-plan ceiling, not raisable).
-  // Confirmed necessary the hard way: a large/ambiguous company name
-  // (Chevron — a real request, not a guess) drove enough searching that
-  // the whole function got killed by Vercel's own timeout before this
-  // ever got a chance to fail gracefully into the caller's try/catch. A
+  // A 55s request timeout, under Vercel's 60s hard maxDuration for
+  // api/company-profile.js (vercel.json — the Hobby-plan ceiling, not
+  // raisable) with a small margin for the DB write and response either
+  // side of this call. This route's only job is enrichment (split out
+  // of api/companies.js after confirming, with real timed calls, that
+  // research alone regularly takes 35-50+ seconds — too tight a margin
+  // when it had to share the 60s budget with a second route's own DB
+  // write and response), so it can afford to use nearly all of it. A
   // request-level timeout throws an ordinary error the caller already
   // handles, so the company still gets tracked with just no snapshot,
   // rather than losing the whole request including the response.
   const response = await anthropic.messages.create(
     {
       model: "claude-sonnet-5",
-      max_tokens: 1024,
+      // 1024 was too low — confirmed directly, not guessed: a real
+      // Chevron request came back with stop_reason "max_tokens" and the
+      // final JSON cut off mid-string ("...refining, and m"), which is
+      // why it failed to parse. max_tokens caps this whole turn's
+      // output, and for a company big enough to need several searches,
+      // that budget covers each search's own short narration + the
+      // tool_use block itself + the final JSON — 1024 wasn't enough
+      // headroom for a company with a lot of real search-worthy
+      // material. 4096 gives real room without being unbounded.
+      max_tokens: 4096,
       system: SYSTEM_PROMPT,
       // Bounds real search cost/time per company — one company shouldn't
       // spiral into an open-ended research session.
       tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }],
       messages: [{ role: "user", content: `Company name: ${companyName}` }],
     },
-    { timeout: 45_000 },
+    // maxRetries: 0 is load-bearing, not an optimization — confirmed by
+    // testing directly, not assumed. The SDK's default is 2 retries on a
+    // timeout, so `timeout` alone doesn't mean "give up after N seconds":
+    // it means "give up after N seconds, then try up to two more times."
+    // At the default that would reach ~165s wall-clock — enough to blow
+    // past Vercel's 60s hard maxDuration on its own even with the extra
+    // room this route now has. One attempt, one real ceiling.
+    { timeout: 55_000, maxRetries: 0 },
   )
 
   // Billed whether or not the completion turns out to be parseable, same
@@ -62,6 +80,13 @@ export async function researchCompanyProfile(companyName) {
   // small per-search fee (see api/_lib/companyProfile.js's plan notes) —
   // immaterial at the volume this runs at (once per newly tracked company).
   await recordSpend(response.usage.input_tokens, response.usage.output_tokens)
+
+  // Detected directly against a real failure — log this distinctly from
+  // a plain "didn't return valid JSON" below, since the fix is different
+  // (raise max_tokens further) rather than a parsing/prompt problem.
+  if (response.stop_reason === "max_tokens") {
+    console.warn(`researchCompanyProfile: hit max_tokens for "${companyName}" — response was truncated`)
+  }
 
   // Unlike normalize.js (a plain completion, no tools — realistically one
   // text block), a web-search turn can produce several text blocks: a

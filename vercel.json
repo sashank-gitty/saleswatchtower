@@ -9,7 +9,7 @@
     "api/ingest.js": {
       "maxDuration": 60
     },
-    "api/companies.js": {
+    "api/company-profile.js": {
       "maxDuration": 60
     }
   },
