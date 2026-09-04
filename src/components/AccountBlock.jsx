@@ -1,8 +1,20 @@
 import { useState } from "react"
 import { linkProps } from "../lib/router.js"
+import { keyInsights } from "../lib/accountBrief.js"
 import { AccountAvatar, Pill, ScoreBadge } from "./ui.jsx"
 import { ChevronDownIcon } from "./icons.jsx"
 import SignalRow from "./SignalRow.jsx"
+
+// "What changed" as real quoted headlines, not invented prose — the
+// same no-fabrication rule accountBrief.js enforces for the account
+// detail page's Key Insights panel. Up to 2 themes so the line stays
+// scannable; the header's title="" attribute below still carries the
+// fuller per-category tally on hover for anyone who wants it.
+function changeSummary(signals) {
+  const insights = keyInsights(signals)
+  if (!insights.length) return null
+  return insights.slice(0, 2).map((i) => `${i.label}: ${i.lead}`).join(" · ")
+}
 
 // One account block: a header row carrying the account's identity and
 // rollup, then its individual signals nested beneath as dense compact
@@ -14,6 +26,7 @@ import SignalRow from "./SignalRow.jsx"
 function AccountBlock({ account, signals, companies, onOpenSignal, onToggleReviewed, selectedIds, onToggleSelect }) {
   const [expanded, setExpanded] = useState(false)
   const visible = expanded ? signals : signals.slice(0, 3)
+  const summary = changeSummary(signals) ?? account.whyNow
 
   return (
     <div className="border-b border-slate-200 last:border-b-0 dark:border-zinc-800">
@@ -42,7 +55,7 @@ function AccountBlock({ account, signals, companies, onOpenSignal, onToggleRevie
               attribute, same "detail on demand" pattern SectionTitle's
               hint icon already uses elsewhere in this app. */}
           <p className="mt-0.5 truncate text-xs text-body-500 dark:text-zinc-400" title={account.rollup}>
-            {account.whyNow}
+            {summary}
           </p>
         </div>
         <div className="flex flex-shrink-0 items-center gap-2">
