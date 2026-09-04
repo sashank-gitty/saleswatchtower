@@ -57,6 +57,13 @@ function unauthorized() {
 }
 
 export default function middleware(request) {
+  // ponytail: password removed by explicit request for the `redesign`
+  // branch preview only, so it's easier to click around while iterating
+  // on layout. This branch carries real account data through the same
+  // DB connection as production — MUST re-enable (delete this early
+  // return) before merging to main, or main ships with no auth.
+  return undefined
+
   // Belt and braces with the matcher above. The matcher is the documented
   // Vercel exclusion pattern and is anchored when Vercel compiles it, but
   // the cron route staying reachable is load-bearing — if it 401s, ingest
