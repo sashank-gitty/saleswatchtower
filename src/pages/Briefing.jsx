@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { linkProps, navigate } from "../lib/router.js"
 import { computeBriefing } from "../lib/briefing.js"
-import { buildSignalReason } from "../lib/signalReason.js"
 import {
   PageHeader,
   Card,
@@ -16,7 +15,7 @@ import {
   ScoreBadge,
 } from "../components/ui.jsx"
 import { ChevronRightIcon } from "../components/icons.jsx"
-import SignalRow from "../components/SignalRow.jsx"
+import AccountBlock from "../components/AccountBlock.jsx"
 import Checkbox from "../components/Checkbox.jsx"
 
 // Same staleness bar SyncStatus.jsx uses in the top nav, kept local here
@@ -173,21 +172,24 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
       null,
     [accounts],
   )
-  // Tracked-account signals first, same "what's mine" vs "what's out
-  // there" split as Global Feed — a real prospect's own news shouldn't
-  // sit below a company you've never heard of just because it's newer.
-  const visibleSignals = useMemo(
-    () =>
-      [...briefing.newSinceYesterday]
-        .sort((a, b) => {
-          const aTracked = buildSignalReason(a, companies).tone === "prospect" ? 1 : 0
-          const bTracked = buildSignalReason(b, companies).tone === "prospect" ? 1 : 0
-          return bTracked - aTracked
-        })
-        .slice(0, 10),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [briefing.newSinceYesterday, companies],
-  )
+  // Grouped by account instead of a flat list — same "what changed at
+  // each account" shape as Global Feed's AccountBlock, so "New Since
+  // Yesterday" doesn't turn into an endless scroll of individual
+  // headlines the moment a handful of accounts each get a few signals.
+  // Tracked accounts first, same "what's mine" vs "what's out there"
+  // split as Global Feed.
+  const newAccountGroups = useMemo(() => {
+    const newIds = new Set(briefing.newSinceYesterday.map((s) => s.id))
+    return accounts
+      .map((account) => ({ account, signals: account.signals.filter((s) => newIds.has(s.id)) }))
+      .filter((g) => g.signals.length > 0)
+      .sort((a, b) => (b.account.managed ? 1 : 0) - (a.account.managed ? 1 : 0))
+  }, [accounts, briefing.newSinceYesterday])
+
+  // Flat list of every signal actually visible above, purely so
+  // select-all / bulk-mark-reviewed still operate over the real set —
+  // the grouping above is a display concern, not a data one.
+  const visibleSignals = useMemo(() => newAccountGroups.flatMap((g) => g.signals), [newAccountGroups])
 
   const [selectedIds, setSelectedIds] = useState(() => new Set())
 
@@ -263,17 +265,19 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
           {topPriority && (
             <a
               {...linkProps(`/accounts/${encodeURIComponent(topPriority.key)}`)}
-              className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 transition-colors hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-500/40"
+              className="mb-6 flex flex-wrap items-center gap-5 rounded-xl border border-slate-200 bg-white p-7 transition-colors hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-500/40"
             >
-              <AccountAvatar name={topPriority.name} logoUrl={topPriority.logoUrl} size="lg" />
+              <AccountAvatar name={topPriority.name} logoUrl={topPriority.logoUrl} size="xl" />
               <div className="min-w-0 flex-1">
                 <p className="text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
                   Look here first
                 </p>
-                <p className="mt-0.5 truncate text-lg font-bold text-ink-900 dark:text-zinc-50">{topPriority.name}</p>
-                <p className="mt-0.5 text-dense text-body-600 dark:text-zinc-300">{topPriority.whyNow}</p>
+                <p className="mt-1 truncate text-2xl font-bold tracking-tight text-ink-900 dark:text-zinc-50">
+                  {topPriority.name}
+                </p>
+                <p className="mt-1 text-sm text-body-600 dark:text-zinc-300">{topPriority.whyNow}</p>
               </div>
-              <div className="flex flex-shrink-0 items-center gap-2">
+              <div className="flex flex-shrink-0 items-center gap-3">
                 <ScoreBadge score={topPriority.score} size="lg" />
                 <ChevronRightIcon className="h-5 w-5 text-slate-400 dark:text-zinc-500" />
               </div>
@@ -340,40 +344,35 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
               />
             </Card>
           ) : (
-            <div className="mb-8 space-y-2">
-              {visibleSignals.map((signal, i) => {
-                const isTracked = buildSignalReason(signal, companies).tone === "prospect"
-                const prevTracked =
-                  i > 0 ? buildSignalReason(visibleSignals[i - 1], companies).tone === "prospect" : null
-                const isFirstTracked = i === 0 && isTracked
-                const isFirstUntracked = !isTracked && (i === 0 || prevTracked)
+            <Card className="mb-8 overflow-hidden">
+              {newAccountGroups.map(({ account, signals: accountSignals }, i) => {
+                const isFirstTracked = i === 0 && account.managed
+                const isFirstUntracked = !account.managed && (i === 0 || newAccountGroups[i - 1].account.managed)
                 return (
-                  <div key={signal.id}>
+                  <div key={account.key}>
                     {isFirstTracked && (
-                      <p className="px-1 pb-1 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                      <p className="bg-slate-50 px-4 py-2 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:bg-zinc-900/60 dark:text-zinc-500">
                         Your Accounts
                       </p>
                     )}
                     {isFirstUntracked && (
-                      <p className="px-1 pb-1 pt-2 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                      <p className="bg-slate-50 px-4 py-2 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:bg-zinc-900/60 dark:text-zinc-500">
                         Market Discovery — not on your tracked list
                       </p>
                     )}
-                    <SignalRow
-                      item={signal}
+                    <AccountBlock
+                      account={account}
+                      signals={accountSignals}
                       companies={companies}
-                      reviewed={signal.reviewed}
+                      onOpenSignal={onOpenSignal}
                       onToggleReviewed={onToggleReviewed}
-                      onOpen={onOpenSignal}
-                      selected={selectedIds.has(signal.id)}
+                      selectedIds={selectedIds}
                       onToggleSelect={toggleSelectOne}
-                      showCheckbox
-                      compact
                     />
                   </div>
                 )
               })}
-            </div>
+            </Card>
           )}
 
           <SectionTitle hint="What kind of signal is showing up most, across the whole feed.">

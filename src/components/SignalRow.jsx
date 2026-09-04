@@ -48,6 +48,7 @@ function SignalRow({
   compact = false,
   showCheckbox = true,
   companies = [],
+  hideEntity = false,
 }) {
   const [copied, setCopied] = useState(false)
 
@@ -119,8 +120,7 @@ function SignalRow({
           className="min-w-0 flex-1 truncate text-left text-sm font-medium text-body-600 transition-colors hover:text-brand-600 dark:text-zinc-200 dark:hover:text-brand-400"
           title={item.headline}
         >
-          <span className="font-bold text-ink-900 dark:text-zinc-50">{item.entity}</span>
-          {" — "}
+          {!hideEntity && <span className="font-bold text-ink-900 dark:text-zinc-50">{item.entity}{" — "}</span>}
           {item.headline}
         </button>
         <span

@@ -436,7 +436,7 @@ export function SubNav({ tabs, active, onChange }) {
               title={tab.hasData === false ? `${tab.label} — nothing here yet` : undefined}
               className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3.5 py-1.5 text-dense font-semibold transition-colors ${
                 isActive
-                  ? "bg-navy-900 text-white dark:bg-white dark:text-navy-900"
+                  ? "bg-navy-900/8 text-navy-900 dark:bg-white/10 dark:text-white"
                   : "text-body-600 hover:bg-slate-100 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
               }`}
             >
