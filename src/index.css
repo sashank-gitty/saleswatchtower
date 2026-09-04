@@ -8,10 +8,11 @@
    saturated accent hue at a time from a short allowed list: red, blue,
    orange (black/white are the neutrals, not accents). Two families:
 
-   - brand-*  the accent ramp, anchored on brand-500 (#ea580c, orange) —
+   - brand-*  the accent ramp, anchored on brand-500 (#3b82f6, blue) —
               links, active states, stat numbers, the one colour spent
-              on "this needs you." Swap this ramp's hexes to red or blue
-              to change the accent; don't add a second accent alongside it.
+              on "this needs you." Swap this ramp's hexes to red or
+              orange to change the accent; don't add a second accent
+              alongside it.
    - navy-*   true near-black, anchored on navy-900 (#18181b, zinc-900,
               same family Tailwind's own zinc-* scale uses) — primary
               buttons, active pills, the wordmark tile.
@@ -24,16 +25,16 @@
     "Noto Color Emoji";
   --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
 
-  --color-brand-50: #fff7ed;
-  --color-brand-100: #ffedd5;
-  --color-brand-200: #fed7aa;
-  --color-brand-300: #fdba74;
-  --color-brand-400: #fb923c;
-  --color-brand-500: #ea580c;
-  --color-brand-600: #c2410c;
-  --color-brand-700: #9a3412;
-  --color-brand-800: #7c2d12;
-  --color-brand-900: #6c2e0d;
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
 
   --color-navy-500: #71717a;
   --color-navy-600: #52525b;
@@ -122,7 +123,7 @@
     transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  /* The signature hero-word treatment: ink-to-orange clipped to the glyphs.
+  /* The signature hero-word treatment: ink-to-blue clipped to the glyphs.
      Reserved for one or two words in a major heading — run it across a
      whole sentence and it stops reading as an accent and starts reading
      as a gradient. Dark mode lifts both stops, because dark ink on
