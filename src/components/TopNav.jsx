@@ -61,9 +61,9 @@ function NavLink({ item, active }) {
     <a
       {...linkProps(href)}
       aria-current={active ? "page" : undefined}
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1.5 text-dense font-semibold transition-colors ${
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-dense font-semibold transition-colors ${
         active
-          ? "bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
+          ? "bg-navy-900 text-white dark:bg-white dark:text-navy-900"
           : "text-body-600 hover:bg-slate-100 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
       }`}
     >
@@ -199,7 +199,7 @@ function TopNav({
                   aria-current={active ? "page" : undefined}
                   className={`inline-flex items-center gap-2.5 rounded-full px-3 py-2.5 text-sm font-semibold transition-colors ${
                     active
-                      ? "bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
+                      ? "bg-navy-900 text-white dark:bg-white dark:text-navy-900"
                       : "text-body-600 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800/60"
                   }`}
                 >
