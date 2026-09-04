@@ -3,18 +3,18 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------------------------------------------------------------------
-   Design tokens — "Merge" direction (warm neutral + amber), redesign
-   branch. Two families still do the work, just repointed:
+   Design tokens — neutral-only direction, redesign branch. White page,
+   true-grey (not warm, not blue-tinted) neutrals, and exactly one
+   saturated accent hue at a time from a short allowed list: red, blue,
+   orange (black/white are the neutrals, not accents). Two families:
 
-   - brand-*  the accent ramp, anchored on brand-500 (#d97706, amber) —
+   - brand-*  the accent ramp, anchored on brand-500 (#ea580c, orange) —
               links, active states, stat numbers, the one colour spent
-              on "this needs you."
-   - navy-*   the near-black end, anchored on navy-900 (#17140f) — a
-              warm ink, not a blue-black. Primary buttons, active pills.
-
-   Neutrals lean warm grey (not blue-slate, not cool grey): body copy
-   #726e64, headlines #17140f. That warmth is what reads as "own
-   identity" rather than generic dashboard chrome.
+              on "this needs you." Swap this ramp's hexes to red or blue
+              to change the accent; don't add a second accent alongside it.
+   - navy-*   true near-black, anchored on navy-900 (#18181b, zinc-900,
+              same family Tailwind's own zinc-* scale uses) — primary
+              buttons, active pills, the wordmark tile.
    --------------------------------------------------------------------- */
 @theme {
   /* Tailwind's own default sans stack, deliberately. No webfont: each OS
@@ -24,34 +24,34 @@
     "Noto Color Emoji";
   --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
 
-  --color-brand-50: #fdf6ec;
-  --color-brand-100: #faecd3;
-  --color-brand-200: #f3d9a6;
-  --color-brand-300: #eabf6e;
-  --color-brand-400: #e0a344;
-  --color-brand-500: #d97706;
-  --color-brand-600: #c2660a;
-  --color-brand-700: #9c5308;
-  --color-brand-800: #7a420a;
-  --color-brand-900: #5c330a;
+  --color-brand-50: #fff7ed;
+  --color-brand-100: #ffedd5;
+  --color-brand-200: #fed7aa;
+  --color-brand-300: #fdba74;
+  --color-brand-400: #fb923c;
+  --color-brand-500: #ea580c;
+  --color-brand-600: #c2410c;
+  --color-brand-700: #9a3412;
+  --color-brand-800: #7c2d12;
+  --color-brand-900: #6c2e0d;
 
-  --color-navy-500: #4a453d;
-  --color-navy-600: #34302a;
-  --color-navy-700: #26221d;
-  --color-navy-800: #1c1912;
-  --color-navy-900: #17140f;
+  --color-navy-500: #71717a;
+  --color-navy-600: #52525b;
+  --color-navy-700: #3f3f46;
+  --color-navy-800: #27272a;
+  --color-navy-900: #18181b;
 
-  --color-ink-900: #17140f;
-  --color-ink-700: #34302a;
-  --color-body-600: #726e64;
-  /* #8a857c measures 4.6:1 against --color-page — clears WCAG AA's
-     4.5:1 for the 11-13px labels/hints/footnotes this token is used at,
-     same warm-grey direction as body-600, just lighter for the two-tier
-     system to still read as two tiers. */
-  --color-body-500: #8a857c;
+  --color-ink-900: #18181b;
+  --color-ink-700: #3f3f46;
+  --color-body-600: #52525b;
+  /* #68686e measures 4.9:1 against --color-page (white) — clears WCAG
+     AA's 4.5:1 for the 11-13px labels/hints/footnotes this token is
+     used at, same true-grey direction as body-600, just lighter so the
+     two-tier system still reads as two tiers. */
+  --color-body-500: #68686e;
 
-  --color-page: #f8f7f4;
-  --color-section: #f3f1ec;
+  --color-page: #ffffff;
+  --color-section: #f6f6f7;
 
   /* Headline scale. 48px at line-height 51.84px is the reference site's
      hero exactly — a ~1.08 ratio, far tighter than Tailwind's default,
@@ -122,7 +122,7 @@
     transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  /* The signature hero-word treatment: ink-to-amber clipped to the glyphs.
+  /* The signature hero-word treatment: ink-to-orange clipped to the glyphs.
      Reserved for one or two words in a major heading — run it across a
      whole sentence and it stops reading as an accent and starts reading
      as a gradient. Dark mode lifts both stops, because dark ink on

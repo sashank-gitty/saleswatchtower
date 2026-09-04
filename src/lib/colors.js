@@ -53,7 +53,7 @@ export function pillClassForScope() {
 // palette above, kept as its own two-color scale.
 export const SCOPE_HEX = {
   macro: "#64748b",
-  micro: "#0989e5",
+  micro: "#2563eb",
 }
 
 // Single accent used everywhere Regulatory & Pain-Point needs to read as
