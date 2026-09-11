@@ -13,7 +13,9 @@ import {
   StatTile,
   AccountAvatar,
   ScoreBadge,
+  TabStrip,
 } from "../components/ui.jsx"
+import SignalRow from "../components/SignalRow.jsx"
 import { ChevronRightIcon } from "../components/icons.jsx"
 import AccountBlock from "../components/AccountBlock.jsx"
 import Checkbox from "../components/Checkbox.jsx"
@@ -186,10 +188,43 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
       .sort((a, b) => (b.account.managed ? 1 : 0) - (a.account.managed ? 1 : 0))
   }, [accounts, briefing.newSinceYesterday])
 
-  // Flat list of every signal actually visible above, purely so
-  // select-all / bulk-mark-reviewed still operate over the real set —
-  // the grouping above is a display concern, not a data one.
-  const visibleSignals = useMemo(() => newAccountGroups.flatMap((g) => g.signals), [newAccountGroups])
+  // Broad, no-single-company news (searches like "AI industry trends" —
+  // see api/_lib/watchlist.js) — these never produce an account row
+  // (accountModel.js), so they're their own lens rather than buried
+  // inside a table that can't display them.
+  const macroSignals = useMemo(
+    () => briefing.newSinceYesterday.filter((s) => s.scope === "macro"),
+    [briefing.newSinceYesterday],
+  )
+
+  // Same accounts as the "Your Accounts" tab, regrouped by the industry
+  // label the research pipeline already attaches to tracked companies
+  // (api/_lib/companyProfile.js) — untracked/discovery companies only
+  // get the light domain-only lookup, so they fall into "Unclassified"
+  // until they're tracked and get the full profile.
+  const industryGroups = useMemo(() => {
+    const byIndustry = new Map()
+    for (const group of newAccountGroups) {
+      const key = group.account.industry || "Unclassified"
+      if (!byIndustry.has(key)) byIndustry.set(key, [])
+      byIndustry.get(key).push(group)
+    }
+    return [...byIndustry.entries()].sort(([a], [b]) => {
+      if (a === "Unclassified") return 1
+      if (b === "Unclassified") return -1
+      return a.localeCompare(b)
+    })
+  }, [newAccountGroups])
+
+  const accountsFlat = useMemo(() => newAccountGroups.flatMap((g) => g.signals), [newAccountGroups])
+
+  const [homeTab, setHomeTab] = useState("accounts")
+
+  // Select-all / bulk-mark-reviewed operates over whichever lens is on
+  // screen — Your Accounts and By Industry show the same underlying
+  // signals regrouped, so they share a set; Macro Trends is a genuinely
+  // different set of signals.
+  const visibleSignals = homeTab === "macro" ? macroSignals : accountsFlat
 
   const [selectedIds, setSelectedIds] = useState(() => new Set())
 
@@ -302,7 +337,7 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
           </div>
 
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <SectionTitle hint="Every signal ingested in the last 24 hours, newest first.">
+            <SectionTitle hint="Everything ingested in the last 24 hours, split three ways: broad industry news, grouped by vertical, and grouped by your own tracked accounts.">
               New Since Yesterday
             </SectionTitle>
             {visibleSignals.length > 0 && (
@@ -344,35 +379,111 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
               />
             </Card>
           ) : (
-            <Card className="mb-8 overflow-hidden">
-              {newAccountGroups.map(({ account, signals: accountSignals }, i) => {
-                const isFirstTracked = i === 0 && account.managed
-                const isFirstUntracked = !account.managed && (i === 0 || newAccountGroups[i - 1].account.managed)
-                return (
-                  <div key={account.key}>
-                    {isFirstTracked && (
-                      <p className="bg-slate-50 px-4 py-2 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:bg-zinc-900/60 dark:text-zinc-500">
-                        Your Accounts
-                      </p>
-                    )}
-                    {isFirstUntracked && (
-                      <p className="bg-slate-50 px-4 py-2 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:bg-zinc-900/60 dark:text-zinc-500">
-                        Market Discovery — not on your tracked list
-                      </p>
-                    )}
-                    <AccountBlock
-                      account={account}
-                      signals={accountSignals}
-                      companies={companies}
-                      onOpenSignal={onOpenSignal}
-                      onToggleReviewed={onToggleReviewed}
-                      selectedIds={selectedIds}
-                      onToggleSelect={toggleSelectOne}
+            <>
+              <TabStrip
+                className="mb-3"
+                tabs={[
+                  { id: "accounts", label: "Your Accounts", count: accountsFlat.length },
+                  { id: "industry", label: "By Industry", count: newAccountGroups.length },
+                  { id: "macro", label: "Macro Trends", count: macroSignals.length },
+                ]}
+                active={homeTab}
+                onChange={setHomeTab}
+              />
+
+              {homeTab === "accounts" && (
+                <Card className="mb-8 overflow-hidden">
+                  {newAccountGroups.length === 0 ? (
+                    <EmptyState title="No account-specific signals" description="Nothing new named a tracked or discovered company today." />
+                  ) : (
+                    newAccountGroups.map(({ account, signals: accountSignals }, i) => {
+                      const isFirstTracked = i === 0 && account.managed
+                      const isFirstUntracked = !account.managed && (i === 0 || newAccountGroups[i - 1].account.managed)
+                      return (
+                        <div key={account.key}>
+                          {isFirstTracked && (
+                            <p className="bg-slate-50 px-4 py-2 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:bg-zinc-900/60 dark:text-zinc-500">
+                              Your Accounts
+                            </p>
+                          )}
+                          {isFirstUntracked && (
+                            <p className="bg-slate-50 px-4 py-2 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:bg-zinc-900/60 dark:text-zinc-500">
+                              Market Discovery — not on your tracked list
+                            </p>
+                          )}
+                          <AccountBlock
+                            account={account}
+                            signals={accountSignals}
+                            companies={companies}
+                            onOpenSignal={onOpenSignal}
+                            onToggleReviewed={onToggleReviewed}
+                            selectedIds={selectedIds}
+                            onToggleSelect={toggleSelectOne}
+                          />
+                        </div>
+                      )
+                    })
+                  )}
+                </Card>
+              )}
+
+              {homeTab === "industry" && (
+                <Card className="mb-8 overflow-hidden">
+                  {industryGroups.length === 0 ? (
+                    <EmptyState title="No account-specific signals" description="Nothing new named a tracked or discovered company today." />
+                  ) : (
+                    industryGroups.map(([industry, groups]) => (
+                      <div key={industry}>
+                        <p className="bg-slate-50 px-4 py-2 text-3xs font-semibold uppercase tracking-wider text-slate-400 dark:bg-zinc-900/60 dark:text-zinc-500">
+                          {industry}
+                        </p>
+                        {groups.map(({ account, signals: accountSignals }) => (
+                          <AccountBlock
+                            key={account.key}
+                            account={account}
+                            signals={accountSignals}
+                            companies={companies}
+                            onOpenSignal={onOpenSignal}
+                            onToggleReviewed={onToggleReviewed}
+                            selectedIds={selectedIds}
+                            onToggleSelect={toggleSelectOne}
+                          />
+                        ))}
+                      </div>
+                    ))
+                  )}
+                </Card>
+              )}
+
+              {homeTab === "macro" && (
+                <Card className="mb-8 overflow-hidden">
+                  {macroSignals.length === 0 ? (
+                    <EmptyState
+                      title="No macro-scope news today"
+                      description="Broad industry/market signals (not tied to one company) show up here when the overnight run finds any."
                     />
-                  </div>
-                )
-              })}
-            </Card>
+                  ) : (
+                    <div className="flex flex-col gap-1 p-1.5">
+                      {macroSignals.map((signal) => (
+                        <SignalRow
+                          key={signal.id}
+                          item={signal}
+                          companies={companies}
+                          reviewed={signal.reviewed}
+                          onToggleReviewed={onToggleReviewed}
+                          onOpen={onOpenSignal}
+                          selected={selectedIds.has(signal.id)}
+                          onToggleSelect={toggleSelectOne}
+                          showCheckbox
+                          compact
+                          hideEntity
+                        />
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              )}
+            </>
           )}
 
           <SectionTitle hint="What kind of signal is showing up most, across the whole feed.">
