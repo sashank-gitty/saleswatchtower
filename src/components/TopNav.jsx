@@ -19,8 +19,12 @@ import {
 } from "./icons.jsx"
 
 const NAV_ITEMS = [
-  { page: "briefing", href: "/briefing", label: "Briefing", Icon: SunriseIcon },
-  { page: "radar", href: "/radar", label: "Radar", Icon: RadarIcon },
+  // Still the "briefing" page internally (App.jsx, router.js) — only the
+  // nav label changed. Radar's job (pointing at what matters) moved
+  // inside this page as its own section instead of a separate
+  // destination; /radar still resolves, just isn't linked from the nav
+  // anymore, same pattern as the older "My Accounts" removal below.
+  { page: "briefing", href: "/briefing", label: "Home", Icon: SunriseIcon },
   { page: "feed", href: "/feed", label: "Global Feed", Icon: FeedIcon },
   { page: "competitors", href: "/competitors", label: "Competitors", Icon: TargetIcon },
   // "My Accounts" used to be its own item here, right next to this one —

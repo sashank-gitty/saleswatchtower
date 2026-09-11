@@ -23,9 +23,9 @@ export function navigate(to, { replace = false } = {}) {
 function parsePath(pathname) {
   const segments = pathname.split("/").filter(Boolean)
 
-  // "/" and "/feed" both land on the Global Feed: it's the closest thing
-  // this app has to a home screen, and a bare domain shouldn't 404.
-  if (segments.length === 0) return { page: "feed", accountId: null }
+  // A bare domain shouldn't 404 — it lands on Home (still the "briefing"
+  // page id internally; only the nav label changed).
+  if (segments.length === 0) return { page: "briefing", accountId: null }
 
   const [first, second] = segments
   if (first === "accounts") return { page: "accounts", accountId: second ?? null }

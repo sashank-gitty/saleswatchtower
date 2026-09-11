@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { linkProps, navigate } from "../lib/router.js"
 import { computeBriefing } from "../lib/briefing.js"
 import {
@@ -16,7 +16,6 @@ import {
   TabStrip,
 } from "../components/ui.jsx"
 import SignalRow from "../components/SignalRow.jsx"
-import { ChevronRightIcon } from "../components/icons.jsx"
 import AccountBlock from "../components/AccountBlock.jsx"
 import Checkbox from "../components/Checkbox.jsx"
 
@@ -218,7 +217,35 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
 
   const accountsFlat = useMemo(() => newAccountGroups.flatMap((g) => g.signals), [newAccountGroups])
 
+  // Radar's job, folded into three quick pointers instead of its own
+  // page: one pick per lens, each jumping straight to that tab below
+  // rather than making you go hunting for what's worth a look.
+  const topMacroSignal = useMemo(
+    () => [...macroSignals].sort((a, b) => (b.outreachRelevance ?? 0) - (a.outreachRelevance ?? 0))[0] ?? null,
+    [macroSignals],
+  )
+  const topIndustryPick = useMemo(() => {
+    const real = industryGroups.filter(([name]) => name !== "Unclassified")
+    const list = real.length > 0 ? real : industryGroups
+    if (list.length === 0) return null
+    const [name, groups] = [...list].sort(
+      (a, b) =>
+        b[1].reduce((sum, g) => sum + g.signals.length, 0) - a[1].reduce((sum, g) => sum + g.signals.length, 0),
+    )[0]
+    return {
+      name,
+      totalSignals: groups.reduce((sum, g) => sum + g.signals.length, 0),
+      topAccountName: groups[0]?.account.name,
+    }
+  }, [industryGroups])
+
   const [homeTab, setHomeTab] = useState("accounts")
+  const tabsSectionRef = useRef(null)
+
+  function jumpToTab(tab) {
+    setHomeTab(tab)
+    tabsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+  }
 
   // Select-all / bulk-mark-reviewed operates over whichever lens is on
   // screen — Your Accounts and By Industry show the same underlying
@@ -297,26 +324,67 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
         </div>
       ) : (
         <>
-          {topPriority && (
-            <a
-              {...linkProps(`/accounts/${encodeURIComponent(topPriority.key)}`)}
-              className="mb-6 flex flex-wrap items-center gap-5 rounded-xl border border-slate-200 bg-white p-7 transition-colors hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-500/40"
-            >
-              <AccountAvatar name={topPriority.name} logoUrl={topPriority.logoUrl} size="xl" />
-              <div className="min-w-0 flex-1">
-                <p className="text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                  Look here first
-                </p>
-                <p className="mt-1 truncate text-2xl font-bold tracking-tight text-ink-900 dark:text-zinc-50">
-                  {topPriority.name}
-                </p>
-                <p className="mt-1 text-sm text-body-600 dark:text-zinc-300">{topPriority.whyNow}</p>
+          {(topPriority || topIndustryPick || topMacroSignal) && (
+            <>
+              <SectionTitle hint="Three quick pointers, one per lens — click one to jump straight to that view below.">
+                Radar
+              </SectionTitle>
+              <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+                {topPriority && (
+                  <a
+                    {...linkProps(`/accounts/${encodeURIComponent(topPriority.key)}`)}
+                    className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 transition-colors hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-500/40"
+                  >
+                    <div className="flex items-start gap-3">
+                      <AccountAvatar name={topPriority.name} logoUrl={topPriority.logoUrl} size="md" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                          Top Account
+                        </p>
+                        <p className="truncate text-base font-bold text-ink-900 dark:text-zinc-50">
+                          {topPriority.name}
+                        </p>
+                      </div>
+                      <ScoreBadge score={topPriority.score} size="sm" />
+                    </div>
+                    <p className="mt-2 text-xs text-body-600 dark:text-zinc-300">{topPriority.whyNow}</p>
+                  </a>
+                )}
+
+                {topIndustryPick && (
+                  <button
+                    type="button"
+                    onClick={() => jumpToTab("industry")}
+                    className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 text-left transition-colors hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-500/40"
+                  >
+                    <p className="text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                      Top Industry
+                    </p>
+                    <p className="mt-0.5 text-base font-bold text-ink-900 dark:text-zinc-50">{topIndustryPick.name}</p>
+                    <p className="mt-2 text-xs text-body-600 dark:text-zinc-300">
+                      {topIndustryPick.totalSignals} new {topIndustryPick.totalSignals === 1 ? "signal" : "signals"}
+                      {topIndustryPick.topAccountName ? ` · led by ${topIndustryPick.topAccountName}` : ""}
+                    </p>
+                  </button>
+                )}
+
+                {topMacroSignal && (
+                  <button
+                    type="button"
+                    onClick={() => jumpToTab("macro")}
+                    className="flex flex-col rounded-xl border border-slate-200 bg-white p-5 text-left transition-colors hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-500/40"
+                  >
+                    <p className="text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                      Top Macro Trend
+                    </p>
+                    <p className="mt-0.5 line-clamp-2 text-base font-bold text-ink-900 dark:text-zinc-50">
+                      {topMacroSignal.headline}
+                    </p>
+                    <p className="mt-2 text-xs text-body-600 dark:text-zinc-300">Not tied to one company</p>
+                  </button>
+                )}
               </div>
-              <div className="flex flex-shrink-0 items-center gap-3">
-                <ScoreBadge score={topPriority.score} size="lg" />
-                <ChevronRightIcon className="h-5 w-5 text-slate-400 dark:text-zinc-500" />
-              </div>
-            </a>
+            </>
           )}
 
           <div className="mb-8 grid grid-cols-2 gap-4">
@@ -336,7 +404,7 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
             />
           </div>
 
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <div ref={tabsSectionRef} className="mb-2 flex flex-wrap items-center justify-between gap-2 scroll-mt-16">
             <SectionTitle hint="Everything ingested in the last 24 hours, split three ways: broad industry news, grouped by vertical, and grouped by your own tracked accounts.">
               New Since Yesterday
             </SectionTitle>
