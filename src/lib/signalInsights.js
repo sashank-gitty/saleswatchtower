@@ -127,8 +127,11 @@ const STATUS_ANGLES = {
 
 // Caps at 4 so the drawer stays scannable: the group's own angles first
 // (most specific to the trigger type), then a status angle if this signal
-// matched a tracked company with a known customer/prospect status.
-export function outreachAngles(item, accountStatus = null) {
+// matched a tracked company with a known customer/prospect status, then
+// your own value prop if you've set one up (Settings' "My Company").
+// The value prop is your own written words, not generated here — this
+// just decides when it's relevant enough to surface as an angle.
+export function outreachAngles(item, accountStatus = null, valueProp = null) {
   const group = groupForSignal(item)
   const angles = [...(GROUP_ANGLES[group] ?? GROUP_ANGLES.other)]
 
@@ -136,6 +139,10 @@ export function outreachAngles(item, accountStatus = null) {
   if (matched.length && accountStatus) {
     const statusAngle = STATUS_ANGLES[accountStatus]
     if (statusAngle) angles.push(statusAngle)
+  }
+
+  if (valueProp?.trim()) {
+    angles.push({ label: "Connect it to your own pitch", angle: valueProp.trim() })
   }
 
   return angles.slice(0, 4)

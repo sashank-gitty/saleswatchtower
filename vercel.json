@@ -16,7 +16,7 @@
       "maxDuration": 30
     },
     "api/deal-tools.js": {
-      "maxDuration": 30
+      "maxDuration": 60
     }
   },
   "rewrites": [

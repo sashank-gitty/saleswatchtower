@@ -1,12 +1,14 @@
-// Org Chart, MEDDPICC, MEDDPICC AI-scoring, and account AI-coaching —
-// four logically separate resources, ONE file. Vercel's Hobby plan caps
-// a deployment at 12 Serverless Functions and counts by FILE under
-// api/, not by what's inside it; these were four separate files until
-// that limit was hit for real (see the commit this file lands in).
-// Dispatched by ?resource=org-chart|meddpicc|meddpicc-score|coaching.
+// Org Chart, MEDDPICC, MEDDPICC AI-scoring, account AI-coaching, and
+// your own company profile ("my-company") — five logically separate
+// resources, ONE file. Vercel's Hobby plan caps a deployment at 12
+// Serverless Functions and counts by FILE under api/, not by what's
+// inside it; new resources fold in here rather than becoming new files
+// (see the commit that first hit this limit for the full story).
+// Dispatched by ?resource=org-chart|meddpicc|meddpicc-score|coaching|my-company.
 import { sql } from "./_lib/db.js"
 import { scoreMeddpiccPillar } from "./_lib/meddpiccScore.js"
 import { coachAccount } from "./_lib/accountCoaching.js"
+import { researchCompanyProfile } from "./_lib/companyProfile.js"
 import { BudgetExceededError } from "./_lib/normalize.js"
 
 const MEDDPICC_ROLES = new Set(["economic_buyer", "champion", "coach", "blocker", "decision_maker", "user", "other"])
@@ -319,6 +321,116 @@ async function handleCoaching(req, res) {
 }
 
 // ---------------------------------------------------------------------
+// My Company — the seed for "type in your company, everything adapts."
+// Same research pipeline as tracked companies, pointed at your own.
+
+function myCompanyToWire(row) {
+  if (!row) return null
+  return {
+    companyName: row.company_name,
+    domain: row.domain,
+    logoUrl: row.logo_url,
+    industry: row.industry,
+    description: row.description,
+    valueProp: row.value_prop,
+    competitors: row.competitors ?? [],
+    sourceUrls: row.source_urls ?? [],
+    updatedAt: row.updated_at,
+  }
+}
+
+async function handleMyCompany(req, res) {
+  if (req.method === "GET") {
+    try {
+      const rows = await sql`SELECT * FROM my_company WHERE singleton_key = 'me'`
+      res.status(200).json(myCompanyToWire(rows[0]))
+    } catch (err) {
+      console.error("GET my-company failed:", err)
+      res.status(500).json({ error: "Failed to load company profile" })
+    }
+    return
+  }
+
+  // Runs the real research call (same pipeline as a tracked company's
+  // enrichment) and stores the result. value_prop is only seeded from
+  // the fresh description when there wasn't one already — re-running
+  // research after you've written your own value prop must never
+  // silently overwrite it.
+  if (req.method === "POST") {
+    const { companyName } = req.body ?? {}
+    if (typeof companyName !== "string" || !companyName.trim()) {
+      res.status(400).json({ error: "companyName must be a non-empty string" })
+      return
+    }
+
+    try {
+      const profile = await researchCompanyProfile(companyName.trim())
+      if (!profile) {
+        res.status(200).json({ found: false })
+        return
+      }
+
+      const existing = await sql`SELECT value_prop FROM my_company WHERE singleton_key = 'me'`
+      const valueProp = existing[0]?.value_prop || profile.description || null
+
+      const rows = await sql`
+        INSERT INTO my_company (singleton_key, company_name, domain, logo_url, industry, description, value_prop, competitors, source_urls, updated_at)
+        VALUES ('me', ${companyName.trim()}, ${profile.domain}, ${profile.logoUrl}, ${profile.industry}, ${profile.description}, ${valueProp}, ${JSON.stringify(profile.competitors.map((name) => ({ name, added: false })))}, ${JSON.stringify(profile.sourceUrls)}, now())
+        ON CONFLICT (singleton_key)
+        DO UPDATE SET
+          company_name = EXCLUDED.company_name,
+          domain = EXCLUDED.domain,
+          logo_url = EXCLUDED.logo_url,
+          industry = EXCLUDED.industry,
+          description = EXCLUDED.description,
+          value_prop = EXCLUDED.value_prop,
+          competitors = EXCLUDED.competitors,
+          source_urls = EXCLUDED.source_urls,
+          updated_at = now()
+        RETURNING *
+      `
+      res.status(200).json({ found: true, profile: myCompanyToWire(rows[0]) })
+    } catch (err) {
+      if (err instanceof BudgetExceededError) {
+        res.status(200).json({ found: false, budgetExceeded: true, message: err.message })
+        return
+      }
+      console.error("my-company research failed for", companyName, err)
+      res.status(500).json({ error: "Failed to research company" })
+    }
+    return
+  }
+
+  // Manual edits: value prop rewritten in your own words, or a
+  // competitor marked "added" once you've tracked it.
+  if (req.method === "PUT") {
+    const { valueProp, competitors } = req.body ?? {}
+
+    try {
+      const rows = await sql`
+        UPDATE my_company
+        SET value_prop = COALESCE(${valueProp ?? null}, value_prop),
+            competitors = COALESCE(${competitors ? JSON.stringify(competitors) : null}, competitors),
+            updated_at = now()
+        WHERE singleton_key = 'me'
+        RETURNING *
+      `
+      if (rows.length === 0) {
+        res.status(404).json({ error: "No company profile yet — research one first" })
+        return
+      }
+      res.status(200).json(myCompanyToWire(rows[0]))
+    } catch (err) {
+      console.error("PUT my-company failed:", err)
+      res.status(500).json({ error: "Failed to save changes" })
+    }
+    return
+  }
+
+  res.status(405).json({ error: "Method not allowed" })
+}
+
+// ---------------------------------------------------------------------
 
 export default async function handler(req, res) {
   switch (req.query?.resource) {
@@ -330,7 +442,11 @@ export default async function handler(req, res) {
       return handleMeddpiccScore(req, res)
     case "coaching":
       return handleCoaching(req, res)
+    case "my-company":
+      return handleMyCompany(req, res)
     default:
-      res.status(400).json({ error: "resource query param must be one of: org-chart, meddpicc, meddpicc-score, coaching" })
+      res
+        .status(400)
+        .json({ error: "resource query param must be one of: org-chart, meddpicc, meddpicc-score, coaching, my-company" })
   }
 }

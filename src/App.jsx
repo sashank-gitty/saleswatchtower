@@ -327,7 +327,7 @@ function App() {
         {route.page === "alerts" && <Alerts signals={signals} onOpenSignal={openSignal} />}
 
         {route.page === "settings" && (
-          <Settings theme={theme} onToggleTheme={toggleTheme} signals={signals} />
+          <Settings theme={theme} onToggleTheme={toggleTheme} signals={signals} isTracked={isTracked} onToggleClaim={setCompany} />
         )}
 
         {route.page === "not-found" && (

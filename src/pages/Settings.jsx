@@ -1,5 +1,6 @@
 import { SIGNAL_GROUPS } from "../lib/signalGroups.js"
 import { PageHeader, Card, SectionTitle, Pill, Toggle } from "../components/ui.jsx"
+import MyCompanySection from "../components/MyCompanySection.jsx"
 
 function Row({ label, description, children }) {
   return (
@@ -13,7 +14,7 @@ function Row({ label, description, children }) {
   )
 }
 
-function Settings({ theme, onToggleTheme, signals }) {
+function Settings({ theme, onToggleTheme, signals, isTracked, onToggleClaim }) {
   const origins = signals.reduce((acc, signal) => {
     acc[signal.origin] = (acc[signal.origin] ?? 0) + 1
     return acc
@@ -23,10 +24,12 @@ function Settings({ theme, onToggleTheme, signals }) {
     <>
       <PageHeader
         title="Settings & Status"
-        subtitle="One real setting below (dark mode) — everything under it is a read-only status board, not something you configure."
+        subtitle="Your company profile below personalizes the dashboard; dark mode is the only other real setting; everything under those is a read-only status board."
       />
 
       <div className="space-y-5">
+        <MyCompanySection isTracked={isTracked} onToggleClaim={onToggleClaim} />
+
         <Card className="p-5">
           <SectionTitle>Appearance</SectionTitle>
           <Row label="Dark mode" description="Persisted to this browser. Defaults to your system preference.">
