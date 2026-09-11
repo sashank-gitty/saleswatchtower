@@ -15,11 +15,8 @@
     "api/account-chat.js": {
       "maxDuration": 30
     },
-    "api/account-coaching.js": {
+    "api/deal-tools.js": {
       "maxDuration": 30
-    },
-    "api/meddpicc-score.js": {
-      "maxDuration": 25
     }
   },
   "rewrites": [

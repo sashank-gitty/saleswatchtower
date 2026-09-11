@@ -10,7 +10,7 @@ export function useOrgChart(companyKey) {
 
   const refetch = () => {
     if (!companyKey) return
-    fetch(`/api/org-chart?companyKey=${encodeURIComponent(companyKey)}`)
+    fetch(`/api/deal-tools?resource=org-chart&companyKey=${encodeURIComponent(companyKey)}`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setPeople(Array.isArray(data) ? data : []))
       .catch(() => {})
@@ -24,7 +24,7 @@ export function useOrgChart(companyKey) {
     }
     setLoading(true)
     const controller = new AbortController()
-    fetch(`/api/org-chart?companyKey=${encodeURIComponent(companyKey)}`, { signal: controller.signal })
+    fetch(`/api/deal-tools?resource=org-chart&companyKey=${encodeURIComponent(companyKey)}`, { signal: controller.signal })
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         setPeople(Array.isArray(data) ? data : [])
@@ -38,7 +38,7 @@ export function useOrgChart(companyKey) {
   }, [companyKey])
 
   const addPerson = (person) =>
-    fetch("/api/org-chart", {
+    fetch("/api/deal-tools?resource=org-chart", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ companyKey, ...person }),
@@ -47,7 +47,7 @@ export function useOrgChart(companyKey) {
       .then(() => refetch())
 
   const updatePerson = (id, person) =>
-    fetch("/api/org-chart", {
+    fetch("/api/deal-tools?resource=org-chart", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, ...person }),
@@ -56,7 +56,7 @@ export function useOrgChart(companyKey) {
       .then(() => refetch())
 
   const removePerson = (id) =>
-    fetch(`/api/org-chart?id=${id}`, { method: "DELETE" })
+    fetch(`/api/deal-tools?resource=org-chart&id=${id}`, { method: "DELETE" })
       .then((res) => (res.ok ? null : Promise.reject(new Error(`Server responded ${res.status}`))))
       .then(() => refetch())
 

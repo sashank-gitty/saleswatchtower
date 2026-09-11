@@ -93,7 +93,7 @@ function MeddpiccPanel({ companyKey, companyName, orgChartPeople }) {
     setCoachingLoading(true)
     setCoachingError(null)
     setCoaching(null)
-    fetch("/api/account-coaching", {
+    fetch("/api/deal-tools?resource=coaching", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ companyName, orgChart: orgChartPeople, meddpicc: entries }),

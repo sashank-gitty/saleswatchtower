@@ -21,7 +21,7 @@ export function useMeddpicc(companyKey) {
 
   const refetch = () => {
     if (!companyKey) return
-    fetch(`/api/meddpicc?companyKey=${encodeURIComponent(companyKey)}`)
+    fetch(`/api/deal-tools?resource=meddpicc&companyKey=${encodeURIComponent(companyKey)}`)
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => setRows(Array.isArray(data) ? data : []))
       .catch(() => {})
@@ -35,7 +35,7 @@ export function useMeddpicc(companyKey) {
     }
     setLoading(true)
     const controller = new AbortController()
-    fetch(`/api/meddpicc?companyKey=${encodeURIComponent(companyKey)}`, { signal: controller.signal })
+    fetch(`/api/deal-tools?resource=meddpicc&companyKey=${encodeURIComponent(companyKey)}`, { signal: controller.signal })
       .then((res) => (res.ok ? res.json() : []))
       .then((data) => {
         setRows(Array.isArray(data) ? data : [])
@@ -66,7 +66,7 @@ export function useMeddpicc(companyKey) {
   }, [entries])
 
   const saveEntry = (pillar, { freeText, checklistDone }) =>
-    fetch("/api/meddpicc", {
+    fetch("/api/deal-tools?resource=meddpicc", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ companyKey, pillar, freeText, checklistDone }),
@@ -75,7 +75,7 @@ export function useMeddpicc(companyKey) {
       .then(() => refetch())
 
   const scoreEntry = (pillar, freeText) =>
-    fetch("/api/meddpicc-score", {
+    fetch("/api/deal-tools?resource=meddpicc-score", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ companyKey, pillar, freeText }),
