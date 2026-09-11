@@ -22,8 +22,11 @@ import {
   groupDistribution,
 } from "../lib/accountBrief.js"
 import { accountImpact, outreachAngles } from "../lib/signalInsights.js"
+import { useOrgChart } from "../lib/useOrgChart.js"
 import { Citations } from "../components/Citation.jsx"
 import AccountChat from "../components/AccountChat.jsx"
+import OrgChartPanel from "../components/OrgChartPanel.jsx"
+import MeddpiccPanel from "../components/MeddpiccPanel.jsx"
 import {
   Card,
   Button,
@@ -78,6 +81,8 @@ const TABS = [
   { id: "signals", label: "Signals" },
   { id: "value", label: "Value" },
   { id: "prep", label: "Prep" },
+  { id: "orgchart", label: "Org Chart" },
+  { id: "meddpicc", label: "MEDDPICC" },
   { id: "sentiment", label: "Sentiment" },
   { id: "contacts", label: "Contacts" },
   { id: "tech", label: "Tech" },
@@ -211,6 +216,7 @@ function TrendStat({ trend }) {
 function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, onToggleClaim, sentiment, contacts = [] }) {
   const [tab, setTab] = useState("overview")
   const [group, setGroup] = useState("all")
+  const orgChart = useOrgChart(account?.key)
 
   // Citation numbering is assigned once, over the account's signals in
   // display order, so a given signal carries the same number in every
@@ -926,6 +932,20 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
             </ul>
           </Card>
         </div>
+      )}
+
+      {tab === "orgchart" && (
+        <OrgChartPanel
+          people={orgChart.people}
+          loading={orgChart.loading}
+          onAdd={orgChart.addPerson}
+          onUpdate={orgChart.updatePerson}
+          onRemove={orgChart.removePerson}
+        />
+      )}
+
+      {tab === "meddpicc" && (
+        <MeddpiccPanel companyKey={account?.key} companyName={account?.name} orgChartPeople={orgChart.people} />
       )}
 
       {tab === "sentiment" && (
