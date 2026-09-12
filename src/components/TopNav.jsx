@@ -111,6 +111,7 @@ function TopNav({
   // company quick-switch, so neither requires a trip to Settings.
   const [panelOpen, setPanelOpen] = useState(false)
   const [switchName, setSwitchName] = useState("")
+  const [switchError, setSwitchError] = useState(null)
   const panelRef = useRef(null)
   const suggestions = useCompanySuggestions(switchName, panelOpen)
 
@@ -118,12 +119,22 @@ function TopNav({
   // pressing Enter fires immediately (per direct instruction: "no need
   // to press research or anything"). The app-wide ResearchOverlay
   // (rendered once in App.jsx, reading the same shared `researching`
-  // flag this call sets) is what tells you it's working.
+  // flag this call sets) is what tells you it's working. A failure
+  // still needs to surface *somewhere* even though the panel that
+  // started it already closed — same silent-failure class of bug
+  // MyCompanySection.jsx had, fixed there, and caught here live before
+  // it shipped unnoticed a second time.
   const runSwitch = (name) => {
     if (!name.trim()) return
     setPanelOpen(false)
     setSwitchName("")
+    setSwitchError(null)
     research(name.trim())
+      .then((data) => {
+        if (data.budgetExceeded) setSwitchError("This month's Claude API budget has been reached.")
+        else if (!data.found) setSwitchError(`Couldn't find a real company matching "${name}".`)
+      })
+      .catch(() => setSwitchError(`Couldn't switch to "${name}" — the server had a problem. Try again.`))
   }
 
   // Close the mobile sheet on route change, so tapping a destination
@@ -296,6 +307,22 @@ function TopNav({
                 >
                   Settings
                 </a>
+              </div>
+            )}
+
+            {switchError && (
+              <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-rose-200 bg-rose-50 p-3 text-dense text-rose-700 shadow-xl dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300">
+                <div className="flex items-start justify-between gap-2">
+                  <p>{switchError}</p>
+                  <button
+                    type="button"
+                    onClick={() => setSwitchError(null)}
+                    aria-label="Dismiss"
+                    className="flex-shrink-0 text-rose-500 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-200"
+                  >
+                    <XIcon className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             )}
           </div>
