@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import TopNav from "./components/TopNav.jsx"
 import SignalDetailPanel from "./components/SignalDetailPanel.jsx"
 import CommandPalette from "./components/CommandPalette.jsx"
+import ResearchOverlay from "./components/ResearchOverlay.jsx"
 import ErrorState from "./components/ErrorState.jsx"
 import Briefing from "./pages/Briefing.jsx"
 import GlobalFeed from "./pages/GlobalFeed.jsx"
@@ -368,6 +369,8 @@ function App() {
             : null
         }
       />
+
+      <ResearchOverlay />
     </div>
   )
 }

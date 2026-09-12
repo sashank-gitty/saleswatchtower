@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { linkProps } from "../lib/router.js"
 import { ORG_NAME } from "../config.js"
 import { useMyCompany } from "../lib/useMyCompany.js"
+import { useCompanySuggestions } from "../lib/useCompanySuggestions.js"
 import ThemeToggle from "./ThemeToggle.jsx"
 import SyncStatus from "./SyncStatus.jsx"
 import {
@@ -17,6 +18,7 @@ import {
   BellIcon,
   MenuIcon,
   XIcon,
+  ChevronDownIcon,
 } from "./icons.jsx"
 
 const NAV_ITEMS = [
@@ -102,13 +104,33 @@ function TopNav({
   // Once "My Company" is set up (Settings), the badge shows your
   // company instead of your own name — the dashboard's identity
   // follows whichever org it's actually adapted to.
-  const { profile: myCompany } = useMyCompany()
+  const { profile: myCompany, research } = useMyCompany()
   const displayName = myCompany?.companyName || orgName
+
+  // The badge doubles as a small control panel now — dark mode and a
+  // company quick-switch, so neither requires a trip to Settings.
+  const [panelOpen, setPanelOpen] = useState(false)
+  const [switchName, setSwitchName] = useState("")
+  const panelRef = useRef(null)
+  const suggestions = useCompanySuggestions(switchName, panelOpen)
+
+  // Deliberately no "Research" button here — picking a suggestion or
+  // pressing Enter fires immediately (per direct instruction: "no need
+  // to press research or anything"). The app-wide ResearchOverlay
+  // (rendered once in App.jsx, reading the same shared `researching`
+  // flag this call sets) is what tells you it's working.
+  const runSwitch = (name) => {
+    if (!name.trim()) return
+    setPanelOpen(false)
+    setSwitchName("")
+    research(name.trim())
+  }
 
   // Close the mobile sheet on route change, so tapping a destination
   // doesn't leave the overlay covering the page you just navigated to.
   useEffect(() => {
     setMobileOpen(false)
+    setPanelOpen(false)
   }, [page])
 
   useEffect(() => {
@@ -119,6 +141,22 @@ function TopNav({
     window.addEventListener("keydown", onKey)
     return () => window.removeEventListener("keydown", onKey)
   }, [mobileOpen])
+
+  useEffect(() => {
+    if (!panelOpen) return
+    function onKey(e) {
+      if (e.key === "Escape") setPanelOpen(false)
+    }
+    function onClickOutside(e) {
+      if (panelRef.current && !panelRef.current.contains(e.target)) setPanelOpen(false)
+    }
+    window.addEventListener("keydown", onKey)
+    window.addEventListener("mousedown", onClickOutside)
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      window.removeEventListener("mousedown", onClickOutside)
+    }
+  }, [panelOpen])
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/85 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/85">
@@ -184,14 +222,82 @@ function TopNav({
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
 
           {/* Shows your company name once Settings' "My Company" is set
-              up; falls back to ORG_NAME (src/config.js) until then. */}
-          <div className="ml-1 flex items-center gap-2">
-            <p className="hidden whitespace-nowrap text-dense font-bold text-ink-900 2xl:block dark:text-zinc-50">
-              {displayName}
-            </p>
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-navy-900 text-dense font-bold text-white">
-              {orgInitials(displayName)}
-            </div>
+              up; falls back to ORG_NAME (src/config.js) until then. Now
+              a control-panel trigger, not just a static label — dark
+              mode + company switch live in the dropdown below without a
+              trip to Settings. */}
+          <div ref={panelRef} className="relative ml-1">
+            <button
+              type="button"
+              onClick={() => setPanelOpen((v) => !v)}
+              aria-label="Dashboard controls"
+              aria-expanded={panelOpen}
+              className="flex items-center gap-2 rounded-full py-1 pl-2 pr-1 transition-colors hover:bg-slate-100 dark:hover:bg-zinc-800/60"
+            >
+              <p className="hidden whitespace-nowrap text-dense font-bold text-ink-900 2xl:block dark:text-zinc-50">
+                {displayName}
+              </p>
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-navy-900 text-dense font-bold text-white">
+                {orgInitials(displayName)}
+              </div>
+              <ChevronDownIcon className={`hidden h-3.5 w-3.5 flex-shrink-0 text-slate-400 transition-transform sm:block dark:text-zinc-500 ${panelOpen ? "rotate-180" : ""}`} />
+            </button>
+
+            {panelOpen && (
+              <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-slate-200 bg-white p-3 shadow-xl dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="flex items-center justify-between px-1 py-1.5">
+                  <span className="text-dense font-medium text-body-600 dark:text-zinc-300">Dark mode</span>
+                  <ThemeToggle theme={theme} onToggle={onToggleTheme} />
+                </div>
+
+                <div className="my-2 border-t border-slate-100 dark:border-zinc-800" />
+
+                <div className="px-1">
+                  <label className="mb-1.5 block text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                    Switch company
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={switchName}
+                      onChange={(e) => setSwitchName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") runSwitch(switchName)
+                      }}
+                      placeholder={displayName}
+                      autoComplete="off"
+                      className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-dense text-ink-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-500/20 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                    />
+                    {suggestions.length > 0 && (
+                      <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+                        {suggestions.map((s) => (
+                          <button
+                            key={s.domain || s.name}
+                            type="button"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => runSwitch(s.name)}
+                            className="flex w-full items-center justify-between px-3 py-1.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800"
+                          >
+                            <span className="text-dense font-medium text-ink-900 dark:text-zinc-100">{s.name}</span>
+                            {s.domain && <span className="text-3xs text-body-500 dark:text-zinc-400">{s.domain}</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="my-2 border-t border-slate-100 dark:border-zinc-800" />
+
+                <a
+                  {...linkProps("/settings")}
+                  onClick={() => setPanelOpen(false)}
+                  className="block rounded-lg px-1 py-1.5 text-dense font-medium text-body-600 transition-colors hover:bg-slate-100 hover:text-ink-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                >
+                  Settings
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>

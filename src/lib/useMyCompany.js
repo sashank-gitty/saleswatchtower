@@ -7,11 +7,17 @@ import { useEffect, useState } from "react"
 // every useMyCompany() call site holding its own independent copy.
 // Every consumer (TopNav's badge, Settings' form, the account-page
 // panels) now reads the same singleton and re-renders together the
-// moment any one of them saves — no reload needed. `researching` stays
-// per-call-site on purpose: that's "is *my* button showing a spinner,"
-// not shared data.
+// moment any one of them saves — no reload needed.
+//
+// `researching` is shared too, not per-call-site — a company switch can
+// be kicked off from TopNav's quick-switch dropdown just as easily as
+// from Settings, and the app-wide loading overlay (App.jsx) needs to
+// know regardless of which one started it. There's only ever one real
+// research call in flight at a time (this is a singleton profile), so
+// one shared flag is the honest model, not an approximation.
 let sharedProfile = null
 let sharedLoading = true
+let sharedResearching = false
 let fetchStarted = false
 const listeners = new Set()
 
@@ -39,7 +45,6 @@ function ensureFetched() {
 
 export function useMyCompany() {
   const [, setTick] = useState(0)
-  const [researching, setResearching] = useState(false)
 
   useEffect(() => {
     const listener = () => setTick((n) => n + 1)
@@ -49,7 +54,8 @@ export function useMyCompany() {
   }, [])
 
   const research = (companyName) => {
-    setResearching(true)
+    sharedResearching = true
+    notify()
     return fetch("/api/deal-tools?resource=my-company", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -60,7 +66,10 @@ export function useMyCompany() {
         if (data.found) setShared(data.profile)
         return data
       })
-      .finally(() => setResearching(false))
+      .finally(() => {
+        sharedResearching = false
+        notify()
+      })
   }
 
   const save = ({ valueProp, competitors, strategicPriorities }) =>
@@ -72,5 +81,5 @@ export function useMyCompany() {
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`Server responded ${res.status}`))))
       .then((data) => setShared(data))
 
-  return { profile: sharedProfile, loading: sharedLoading, researching, research, save }
+  return { profile: sharedProfile, loading: sharedLoading, researching: sharedResearching, research, save }
 }

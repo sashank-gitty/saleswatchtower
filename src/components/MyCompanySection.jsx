@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useMyCompany } from "../lib/useMyCompany.js"
+import { useCompanySuggestions } from "../lib/useCompanySuggestions.js"
 import { accountKey } from "../lib/accountModel.js"
 import { Card, SectionTitle, Button, TextInput, Textarea, Pill } from "./ui.jsx"
 
@@ -16,40 +17,8 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
   const [error, setError] = useState(null)
   const [valueProp, setValueProp] = useState(null)
   const [priorities, setPriorities] = useState(null)
-  const [suggestions, setSuggestions] = useState([])
   const [dropdownOpen, setDropdownOpen] = useState(false)
-
-  // Real-time company search via Clearbit's autocomplete endpoint —
-  // free, no API key, CORS-open (verified live before building this:
-  // it still returns real {name, domain} matches), called directly from
-  // the browser rather than through a new backend route. Picking a real
-  // match here only disambiguates the name ("Snowflake" the data
-  // warehouse vs. "Snow Joe" vs. a random council) before the *existing*
-  // research() flow runs — it doesn't change what that flow does or
-  // touch the AI research pipeline at all. Fails completely silently on
-  // any error (network, rate limit, the endpoint going away someday):
-  // no suggestions just means the plain text box + Research button
-  // still works exactly as before, never a broken form.
-  useEffect(() => {
-    const query = companyName.trim()
-    if (query.length < 2 || profile?.companyName) {
-      setSuggestions([])
-      return
-    }
-    const controller = new AbortController()
-    const timeout = setTimeout(() => {
-      fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(query)}`, {
-        signal: controller.signal,
-      })
-        .then((res) => (res.ok ? res.json() : []))
-        .then((data) => setSuggestions(Array.isArray(data) ? data.slice(0, 6) : []))
-        .catch(() => {})
-    }, 250)
-    return () => {
-      clearTimeout(timeout)
-      controller.abort()
-    }
-  }, [companyName, profile?.companyName])
+  const suggestions = useCompanySuggestions(companyName, !profile?.companyName)
 
   const runResearch = (name) => {
     setError(null)
