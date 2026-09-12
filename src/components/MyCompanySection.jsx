@@ -21,27 +21,29 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
     e.preventDefault()
     if (!companyName.trim()) return
     setError(null)
-    research(companyName.trim()).then((data) => {
-      if (data.budgetExceeded) setError("This month's Claude API budget has been reached.")
-      else if (!data.found) setError(`Couldn't find a real company matching "${companyName}" — try a more specific name.`)
-    })
+    research(companyName.trim())
+      .then((data) => {
+        if (data.budgetExceeded) setError("This month's Claude API budget has been reached.")
+        else if (!data.found) setError(`Couldn't find a real company matching "${companyName}" — try a more specific name.`)
+      })
+      .catch(() => setError("Something went wrong reaching the server — try again in a moment."))
   }
 
   const handleValuePropBlur = () => {
     if (valueProp == null || valueProp === profile.valueProp) return
-    save({ valueProp })
+    save({ valueProp }).catch(() => setError("Couldn't save your value prop — try again."))
   }
 
   const handlePrioritiesBlur = () => {
     if (priorities == null || priorities === profile.strategicPriorities) return
-    save({ strategicPriorities: priorities })
+    save({ strategicPriorities: priorities }).catch(() => setError("Couldn't save your priorities — try again."))
   }
 
   const handleAddCompetitor = (name) => {
     const key = accountKey(name)
     onToggleClaim(key, name, true, { isCompetitor: true })
     const nextCompetitors = profile.competitors.map((c) => (c.name === name ? { ...c, added: true } : c))
-    save({ competitors: nextCompetitors })
+    save({ competitors: nextCompetitors }).catch(() => setError("Couldn't save that — try again."))
   }
 
   if (loading) return <Card className="h-40 animate-pulse p-5" />
