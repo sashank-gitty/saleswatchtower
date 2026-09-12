@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { linkProps } from "../lib/router.js"
 import { ORG_NAME } from "../config.js"
+import { useMyCompany } from "../lib/useMyCompany.js"
 import ThemeToggle from "./ThemeToggle.jsx"
 import SyncStatus from "./SyncStatus.jsx"
 import {
@@ -98,6 +99,11 @@ function TopNav({
 }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const mobileRef = useRef(null)
+  // Once "My Company" is set up (Settings), the badge shows your
+  // company instead of your own name — the dashboard's identity
+  // follows whichever org it's actually adapted to.
+  const { profile: myCompany } = useMyCompany()
+  const displayName = myCompany?.companyName || orgName
 
   // Close the mobile sheet on route change, so tapping a destination
   // doesn't leave the overlay covering the page you just navigated to.
@@ -177,16 +183,14 @@ function TopNav({
 
           <ThemeToggle theme={theme} onToggle={onToggleTheme} />
 
-          {/* Just the company name — this app has no login system and
-              is single-user, so there's no "SDR Team" persona to name.
-              Change ORG_NAME in src/config.js when you move employers
-              and this updates everywhere it's shown. */}
+          {/* Shows your company name once Settings' "My Company" is set
+              up; falls back to ORG_NAME (src/config.js) until then. */}
           <div className="ml-1 flex items-center gap-2">
             <p className="hidden whitespace-nowrap text-dense font-bold text-ink-900 2xl:block dark:text-zinc-50">
-              {orgName}
+              {displayName}
             </p>
             <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-navy-900 text-dense font-bold text-white">
-              {orgInitials(orgName)}
+              {orgInitials(displayName)}
             </div>
           </div>
         </div>

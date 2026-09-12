@@ -333,6 +333,7 @@ function myCompanyToWire(row) {
     industry: row.industry,
     description: row.description,
     valueProp: row.value_prop,
+    strategicPriorities: row.strategic_priorities,
     competitors: row.competitors ?? [],
     sourceUrls: row.source_urls ?? [],
     updatedAt: row.updated_at,
@@ -401,16 +402,19 @@ async function handleMyCompany(req, res) {
     return
   }
 
-  // Manual edits: value prop rewritten in your own words, or a
-  // competitor marked "added" once you've tracked it.
+  // Manual edits: value prop rewritten in your own words, a competitor
+  // marked "added" once you've tracked it, or strategic priorities —
+  // what leadership/C-suite wants from the org right now, never
+  // researched, always typed in directly.
   if (req.method === "PUT") {
-    const { valueProp, competitors } = req.body ?? {}
+    const { valueProp, competitors, strategicPriorities } = req.body ?? {}
 
     try {
       const rows = await sql`
         UPDATE my_company
         SET value_prop = COALESCE(${valueProp ?? null}, value_prop),
             competitors = COALESCE(${competitors ? JSON.stringify(competitors) : null}, competitors),
+            strategic_priorities = COALESCE(${strategicPriorities ?? null}, strategic_priorities),
             updated_at = now()
         WHERE singleton_key = 'me'
         RETURNING *

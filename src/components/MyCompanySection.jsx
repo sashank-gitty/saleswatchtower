@@ -15,6 +15,7 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
   const [companyName, setCompanyName] = useState("")
   const [error, setError] = useState(null)
   const [valueProp, setValueProp] = useState(null)
+  const [priorities, setPriorities] = useState(null)
 
   const handleResearch = (e) => {
     e.preventDefault()
@@ -29,6 +30,11 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
   const handleValuePropBlur = () => {
     if (valueProp == null || valueProp === profile.valueProp) return
     save({ valueProp })
+  }
+
+  const handlePrioritiesBlur = () => {
+    if (priorities == null || priorities === profile.strategicPriorities) return
+    save({ strategicPriorities: priorities })
   }
 
   const handleAddCompetitor = (name) => {
@@ -81,6 +87,18 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
               onChange={(e) => setValueProp(e.target.value)}
               onBlur={handleValuePropBlur}
               rows={3}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-body-500 dark:text-zinc-400">
+              What leadership wants right now — e.g. "net-new revenue this quarter" or "retention over new logos." Never researched, only what you type — this shapes each account's suggested approach angle.
+            </label>
+            <Textarea
+              value={priorities ?? profile.strategicPriorities ?? ""}
+              onChange={(e) => setPriorities(e.target.value)}
+              onBlur={handlePrioritiesBlur}
+              rows={2}
             />
           </div>
 

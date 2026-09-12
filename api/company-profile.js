@@ -46,13 +46,13 @@ export default async function handler(req, res) {
     await sql`
       INSERT INTO company_profiles (
         company_key, company_name, domain, logo_url, industry, description, business_model,
-        offerings, headquarters, employee_count, employee_growth, founded_year, source_urls
+        offerings, headquarters, employee_count, employee_growth, founded_year, competitive_position, source_urls
       )
       VALUES (
         ${companyKey}, ${companyName}, ${profile.domain}, ${profile.logoUrl}, ${profile.industry},
         ${profile.description}, ${profile.businessModel}, ${JSON.stringify(profile.offerings)},
         ${profile.headquarters}, ${profile.employeeCount}, ${profile.employeeGrowth}, ${profile.foundedYear},
-        ${JSON.stringify(profile.sourceUrls)}
+        ${profile.competitivePosition}, ${JSON.stringify(profile.sourceUrls)}
       )
       ON CONFLICT (company_key) DO NOTHING
     `

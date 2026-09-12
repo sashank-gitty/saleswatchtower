@@ -24,6 +24,7 @@ Search the web for the real company named in the request, then respond with ONLY
 - "employeeGrowth": one short phrase on hiring/growth trend if you find real evidence of it (e.g. "actively hiring — 20+ open roles"). Omit if you find nothing concrete — never guess a trend.
 - "foundedYear": integer year founded. Omit if unknown.
 - "competitors": a JSON array of up to 5 real company names that genuinely compete with this one (real named companies you found evidence for, not a generic category). Empty array if you can't confirm any.
+- "competitivePosition": 1-2 sentences on how this company is actually positioned relative to its named competitors (market share, pricing, a named differentiator) — only if you find real evidence. Omit entirely rather than guessing at a competitive dynamic you can't support.
 - "sourceUrls": a JSON array of the real URLs you actually drew this from.
 
 Every field is optional except you must make a genuine effort to find each one. Omit a field entirely rather than guessing, inventing, or writing "unknown" — a missing field is honest, a made-up one is not. If you cannot find the company at all (name too generic, no real company matches), respond with exactly: {"notFound": true}
@@ -179,6 +180,7 @@ export async function researchCompanyProfile(companyName) {
     employeeGrowth: typeof parsed.employeeGrowth === "string" ? parsed.employeeGrowth : null,
     foundedYear: Number.isInteger(parsed.foundedYear) ? parsed.foundedYear : null,
     competitors: Array.isArray(parsed.competitors) ? parsed.competitors.filter((c) => typeof c === "string").slice(0, 5) : [],
+    competitivePosition: typeof parsed.competitivePosition === "string" ? parsed.competitivePosition : null,
     sourceUrls: Array.isArray(parsed.sourceUrls) ? parsed.sourceUrls.filter((u) => typeof u === "string") : [],
   }
 }
