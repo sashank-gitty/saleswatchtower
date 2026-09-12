@@ -14,6 +14,7 @@ import {
   AccountAvatar,
   ScoreBadge,
   TabStrip,
+  SearchInput,
 } from "../components/ui.jsx"
 import SignalRow from "../components/SignalRow.jsx"
 import AccountBlock from "../components/AccountBlock.jsx"
@@ -240,6 +241,13 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
   }, [industryGroups])
 
   const [homeTab, setHomeTab] = useState("accounts")
+  const [homeSearchQuery, setHomeSearchQuery] = useState("")
+
+  const handleHomeSearch = (e) => {
+    e.preventDefault()
+    const trimmed = homeSearchQuery.trim()
+    if (trimmed) navigate(`/search?q=${encodeURIComponent(trimmed)}`)
+  }
   const tabsSectionRef = useRef(null)
 
   function jumpToTab(tab) {
@@ -308,6 +316,13 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
         }
       >
         <p className="text-sm text-body-600 dark:text-zinc-400">{today}</p>
+        <form onSubmit={handleHomeSearch} className="mt-3 max-w-lg">
+          <SearchInput
+            value={homeSearchQuery}
+            onChange={setHomeSearchQuery}
+            placeholder="Search everything — companies, headlines, signals..."
+          />
+        </form>
         <div className="mt-3">
           <SyncBanner status={ingestStatus} />
         </div>

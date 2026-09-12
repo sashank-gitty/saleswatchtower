@@ -38,8 +38,9 @@ const NAV_ITEMS = [
 ]
 
 // The wordmark: an original radar-sweep mark (see icons.jsx) inside a
-// solid navy tile, next to "Personal Dashboard" split navy/brand the way
-// the rest of the app uses a two-tone treatment for a compound name. No
+// solid navy tile, next to "Watchtower" — the same name the site's own
+// <title> and repo already use, so the in-app name finally matches
+// everywhere else it appears instead of a generic placeholder. No
 // element here is borrowed from another product — the mark is a glyph
 // this app doesn't share with anything else, not a stylised wordplay on
 // a name.
@@ -53,7 +54,7 @@ function Wordmark() {
         <RadarIcon className="h-[18px] w-[18px]" />
       </span>
       <span className="hidden text-[15px] font-bold leading-none tracking-tight text-ink-900 sm:inline dark:text-zinc-50">
-        Personal <span className="text-brand-600 dark:text-brand-400">Dashboard</span>
+        Watchtower
       </span>
     </a>
   )
@@ -135,19 +136,20 @@ function TopNav({
         </nav>
 
         <div className="ml-auto flex flex-shrink-0 items-center gap-1.5">
-          {/* Search is a button, not an input: the real search surface is
-              the /search page and the ⌘K palette, and a second always-live
-              input in the chrome would compete with both. */}
+          {/* Icon-only, matching Help/Bell beside it — the pill-with-
+              placeholder-text-and-kbd-badge shape was the single most
+              generic-SaaS-template element in the whole header. The real
+              search surface is Home's own search bar and the ⌘K palette
+              (still opens from here, just without announcing itself as
+              loudly). */}
           <button
             type="button"
             onClick={onOpenPalette}
-            className="inline-flex items-center gap-2 rounded-full border border-transparent px-3 py-1.5 text-dense font-semibold text-body-500 transition-colors hover:bg-slate-100 hover:text-ink-900 dark:text-zinc-400 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-100"
+            aria-label="Search (⌘K)"
+            title="Search (⌘K)"
+            className="inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
           >
-            <SearchIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Search</span>
-            <kbd className="hidden rounded border border-slate-300 bg-slate-50 px-1.5 py-0.5 font-mono text-3xs font-semibold text-slate-500 lg:inline dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
-              &#8984;K
-            </kbd>
+            <SearchIcon className="h-[18px] w-[18px]" />
           </button>
 
           <SyncStatus status={syncStatus} />
