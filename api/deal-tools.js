@@ -363,6 +363,13 @@ async function handleMyCompany(req, res) {
       res.status(400).json({ error: "companyName must be a non-empty string" })
       return
     }
+    // Same cap style as account-chat.js's MAX_QUESTION_LENGTH — no real
+    // company name is anywhere near this long, whether typed by hand or
+    // picked from the autocomplete dropdown (MyCompanySection.jsx).
+    if (companyName.length > 200) {
+      res.status(400).json({ error: "companyName must be under 200 characters" })
+      return
+    }
 
     try {
       const profile = await researchCompanyProfile(companyName.trim())
