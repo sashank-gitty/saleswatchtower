@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useMyCompany } from "../lib/useMyCompany.js"
 import { accountKey } from "../lib/accountModel.js"
 import { Card, SectionTitle, Button, TextInput, Textarea, Pill } from "./ui.jsx"
@@ -16,17 +16,65 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
   const [error, setError] = useState(null)
   const [valueProp, setValueProp] = useState(null)
   const [priorities, setPriorities] = useState(null)
+  const [suggestions, setSuggestions] = useState([])
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+
+  // Real-time company search via Clearbit's autocomplete endpoint —
+  // free, no API key, CORS-open (verified live before building this:
+  // it still returns real {name, domain} matches), called directly from
+  // the browser rather than through a new backend route. Picking a real
+  // match here only disambiguates the name ("Snowflake" the data
+  // warehouse vs. "Snow Joe" vs. a random council) before the *existing*
+  // research() flow runs — it doesn't change what that flow does or
+  // touch the AI research pipeline at all. Fails completely silently on
+  // any error (network, rate limit, the endpoint going away someday):
+  // no suggestions just means the plain text box + Research button
+  // still works exactly as before, never a broken form.
+  useEffect(() => {
+    const query = companyName.trim()
+    if (query.length < 2 || profile?.companyName) {
+      setSuggestions([])
+      return
+    }
+    const controller = new AbortController()
+    const timeout = setTimeout(() => {
+      fetch(`https://autocomplete.clearbit.com/v1/companies/suggest?query=${encodeURIComponent(query)}`, {
+        signal: controller.signal,
+      })
+        .then((res) => (res.ok ? res.json() : []))
+        .then((data) => setSuggestions(Array.isArray(data) ? data.slice(0, 6) : []))
+        .catch(() => {})
+    }, 250)
+    return () => {
+      clearTimeout(timeout)
+      controller.abort()
+    }
+  }, [companyName, profile?.companyName])
+
+  const runResearch = (name) => {
+    setError(null)
+    setDropdownOpen(false)
+    research(name)
+      .then((data) => {
+        if (data.budgetExceeded) setError("This month's Claude API budget has been reached.")
+        else if (!data.found) setError(`Couldn't find a real company matching "${name}" — try a more specific name.`)
+      })
+      .catch(() => setError("Something went wrong reaching the server — try again in a moment."))
+  }
 
   const handleResearch = (e) => {
     e.preventDefault()
     if (!companyName.trim()) return
-    setError(null)
-    research(companyName.trim())
-      .then((data) => {
-        if (data.budgetExceeded) setError("This month's Claude API budget has been reached.")
-        else if (!data.found) setError(`Couldn't find a real company matching "${companyName}" — try a more specific name.`)
-      })
-      .catch(() => setError("Something went wrong reaching the server — try again in a moment."))
+    runResearch(companyName.trim())
+  }
+
+  // Selecting a real suggestion skips the extra "now click Research"
+  // step — you already confirmed which real company you meant, so it
+  // populates immediately.
+  const handleSelectSuggestion = (suggestion) => {
+    setCompanyName(suggestion.name)
+    setSuggestions([])
+    runResearch(suggestion.name)
   }
 
   const handleValuePropBlur = () => {
@@ -56,9 +104,35 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
 
       {!profile?.companyName ? (
         <form onSubmit={handleResearch} className="flex flex-wrap items-end gap-3">
-          <div className="min-w-[240px] flex-1">
+          <div className="relative min-w-[240px] flex-1">
             <label className="mb-1.5 block text-xs font-medium text-body-500 dark:text-zinc-400">Company name</label>
-            <TextInput value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Acme Corporation" />
+            <TextInput
+              value={companyName}
+              onChange={(e) => {
+                setCompanyName(e.target.value)
+                setDropdownOpen(true)
+              }}
+              onFocus={() => setDropdownOpen(true)}
+              onBlur={() => setTimeout(() => setDropdownOpen(false), 150)}
+              placeholder="Acme Corporation"
+              autoComplete="off"
+            />
+            {dropdownOpen && suggestions.length > 0 && (
+              <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
+                {suggestions.map((s) => (
+                  <button
+                    key={s.domain || s.name}
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => handleSelectSuggestion(s)}
+                    className="flex w-full items-center justify-between px-3 py-2 text-left transition-colors hover:bg-slate-50 dark:hover:bg-zinc-800"
+                  >
+                    <span className="text-dense font-medium text-ink-900 dark:text-zinc-100">{s.name}</span>
+                    {s.domain && <span className="text-xs text-body-500 dark:text-zinc-400">{s.domain}</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
           <Button type="submit" variant="primary" disabled={!companyName.trim() || researching}>
             {researching ? "Researching..." : "Research"}
