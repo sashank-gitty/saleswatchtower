@@ -6,7 +6,7 @@
 // leadership's stated priorities (Settings' "My Company" ->
 // strategicPriorities, never researched, only what you typed) name one
 // of these, that one moves to the top with your own words attached.
-const STRATEGIC_FRAMINGS = [
+export const STRATEGIC_FRAMINGS = [
   {
     id: "revenue",
     label: "Revenue growth",

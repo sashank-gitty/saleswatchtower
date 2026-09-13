@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useMyCompany } from "../lib/useMyCompany.js"
 import { useCompanySuggestions } from "../lib/useCompanySuggestions.js"
 import { accountKey } from "../lib/accountModel.js"
@@ -18,7 +18,35 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
   const [valueProp, setValueProp] = useState(null)
   const [priorities, setPriorities] = useState(null)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const suggestions = useCompanySuggestions(companyName, !profile?.companyName)
+  // Lets an already-set-up company still change its name from right here
+  // instead of only via TopNav's quick-switch — the empty-profile form
+  // below is reused for this, just gated open manually instead of by
+  // "no profile yet".
+  const [editingName, setEditingName] = useState(false)
+  const suggestions = useCompanySuggestions(companyName, editingName || !profile?.companyName)
+
+  // profile is a shared singleton (useMyCompany.js) — a switch started
+  // from TopNav lands here too. valueProp/priorities above are local
+  // overrides for the not-yet-saved textarea text; without this reset
+  // they kept showing the PREVIOUS company's edited text forever, since
+  // a non-null local override always wins over the incoming profile —
+  // the exact "Settings doesn't update" bug reported live.
+  const mountedCompanyRef = useRef(false)
+  const prevCompanyRef = useRef(null)
+
+  useEffect(() => {
+    if (!profile) return
+    if (!mountedCompanyRef.current) {
+      mountedCompanyRef.current = true
+      prevCompanyRef.current = profile.companyName ?? null
+      return
+    }
+    if (profile.companyName !== prevCompanyRef.current) {
+      setValueProp(null)
+      setPriorities(null)
+    }
+    prevCompanyRef.current = profile.companyName ?? null
+  }, [profile])
 
   const runResearch = (name) => {
     setError(null)
@@ -27,6 +55,10 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
       .then((data) => {
         if (data.budgetExceeded) setError("This month's Claude API budget has been reached.")
         else if (!data.found) setError(`Couldn't find a real company matching "${name}" — try a more specific name.`)
+        else {
+          setCompanyName("")
+          setEditingName(false)
+        }
       })
       .catch(() => setError("Something went wrong reaching the server — try again in a moment."))
   }
@@ -42,7 +74,6 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
   // populates immediately.
   const handleSelectSuggestion = (suggestion) => {
     setCompanyName(suggestion.name)
-    setSuggestions([])
     runResearch(suggestion.name)
   }
 
@@ -65,13 +96,15 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
 
   if (loading) return <Card className="h-40 animate-pulse p-5" />
 
+  const showNameForm = editingName || !profile?.companyName
+
   return (
     <Card className="p-5">
       <SectionTitle hint="Type your company in once — this personalizes outreach angles, defaults Home's industry view, and can seed your Competitors list.">
         My Company
       </SectionTitle>
 
-      {!profile?.companyName ? (
+      {showNameForm ? (
         <form onSubmit={handleResearch} className="flex flex-wrap items-end gap-3">
           <div className="relative min-w-[240px] flex-1">
             <label className="mb-1.5 block text-xs font-medium text-body-500 dark:text-zinc-400">Company name</label>
@@ -83,8 +116,9 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
               }}
               onFocus={() => setDropdownOpen(true)}
               onBlur={() => setTimeout(() => setDropdownOpen(false), 150)}
-              placeholder="Acme Corporation"
+              placeholder={profile?.companyName || "Acme Corporation"}
               autoComplete="off"
+              autoFocus={editingName}
             />
             {dropdownOpen && suggestions.length > 0 && (
               <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900">
@@ -106,6 +140,19 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
           <Button type="submit" variant="primary" disabled={!companyName.trim() || researching}>
             {researching ? "Researching..." : "Research"}
           </Button>
+          {profile?.companyName && (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setEditingName(false)
+                setCompanyName("")
+                setError(null)
+              }}
+            >
+              Cancel
+            </Button>
+          )}
         </form>
       ) : (
         <div className="flex flex-col gap-4">
@@ -114,13 +161,18 @@ function MyCompanySection({ isTracked, onToggleClaim }) {
               <p className="text-base font-bold text-ink-900 dark:text-zinc-50">{profile.companyName}</p>
               {profile.industry && <p className="text-xs text-body-500 dark:text-zinc-400">{profile.industry}</p>}
             </div>
-            <Button
-              variant="secondary"
-              onClick={() => research(profile.companyName)}
-              disabled={researching}
-            >
-              {researching ? "Researching..." : "Re-research"}
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="secondary" onClick={() => setEditingName(true)}>
+                Change company
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => research(profile.companyName)}
+                disabled={researching}
+              >
+                {researching ? "Researching..." : "Re-research"}
+              </Button>
+            </div>
           </div>
 
           <div>

@@ -3,6 +3,7 @@ import TopNav from "./components/TopNav.jsx"
 import SignalDetailPanel from "./components/SignalDetailPanel.jsx"
 import CommandPalette from "./components/CommandPalette.jsx"
 import ResearchOverlay from "./components/ResearchOverlay.jsx"
+import CompanyPriorityPrompt from "./components/CompanyPriorityPrompt.jsx"
 import ErrorState from "./components/ErrorState.jsx"
 import Briefing from "./pages/Briefing.jsx"
 import GlobalFeed from "./pages/GlobalFeed.jsx"
@@ -371,6 +372,7 @@ function App() {
       />
 
       <ResearchOverlay />
+      <CompanyPriorityPrompt />
     </div>
   )
 }

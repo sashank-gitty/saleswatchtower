@@ -378,12 +378,18 @@ async function handleMyCompany(req, res) {
         return
       }
 
-      const existing = await sql`SELECT value_prop FROM my_company WHERE singleton_key = 'me'`
-      const valueProp = existing[0]?.value_prop || profile.description || null
+      const existing = await sql`SELECT company_name, value_prop, strategic_priorities FROM my_company WHERE singleton_key = 'me'`
+      // "Re-research" (same company) must keep your own words. Switching
+      // to a genuinely different company must not — an old value prop or
+      // leadership priority carried under a new company's name is just
+      // wrong, not a helpful default.
+      const sameCompany = existing[0]?.company_name?.trim().toLowerCase() === companyName.trim().toLowerCase()
+      const valueProp = (sameCompany ? existing[0]?.value_prop : null) || profile.description || null
+      const strategicPriorities = sameCompany ? existing[0]?.strategic_priorities ?? null : null
 
       const rows = await sql`
-        INSERT INTO my_company (singleton_key, company_name, domain, logo_url, industry, description, value_prop, competitors, source_urls, updated_at)
-        VALUES ('me', ${companyName.trim()}, ${profile.domain}, ${profile.logoUrl}, ${profile.industry}, ${profile.description}, ${valueProp}, ${JSON.stringify(profile.competitors.map((name) => ({ name, added: false })))}, ${JSON.stringify(profile.sourceUrls)}, now())
+        INSERT INTO my_company (singleton_key, company_name, domain, logo_url, industry, description, value_prop, strategic_priorities, competitors, source_urls, updated_at)
+        VALUES ('me', ${companyName.trim()}, ${profile.domain}, ${profile.logoUrl}, ${profile.industry}, ${profile.description}, ${valueProp}, ${strategicPriorities}, ${JSON.stringify(profile.competitors.map((name) => ({ name, added: false })))}, ${JSON.stringify(profile.sourceUrls)}, now())
         ON CONFLICT (singleton_key)
         DO UPDATE SET
           company_name = EXCLUDED.company_name,
@@ -392,6 +398,7 @@ async function handleMyCompany(req, res) {
           industry = EXCLUDED.industry,
           description = EXCLUDED.description,
           value_prop = EXCLUDED.value_prop,
+          strategic_priorities = EXCLUDED.strategic_priorities,
           competitors = EXCLUDED.competitors,
           source_urls = EXCLUDED.source_urls,
           updated_at = now()
