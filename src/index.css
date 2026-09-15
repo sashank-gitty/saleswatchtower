@@ -3,21 +3,19 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------------------------------------------------------------------
-   Design tokens.
+   Design tokens — neutral-only direction, redesign branch. White page,
+   true-grey (not warm, not blue-tinted) neutrals, and exactly one
+   saturated accent hue at a time from a short allowed list: red, blue,
+   orange (black/white are the neutrals, not accents). Two families:
 
-   Every hex below is lifted from the reference product's computed CSS
-   rather than sampled off a screenshot, so these are the ground truth
-   the rest of the app styles against. Two families do the work:
-
-   - brand-*  the accent blue ramp, anchored on brand-600 (#0989e5) —
-              links, active states, stat numbers, chart strokes.
-   - navy-*   the deep end, anchored on navy-900 (#012167) — primary
-              buttons and the dark stop of every brand gradient.
-
-   The neutrals are the single biggest "feels premium" detail: body copy
-   is a desaturated blue-slate (#41566c), not a pure grey. Headlines go
-   almost-black-blue (#09172b). Swapping either for Tailwind's stock
-   grey scale is what makes an otherwise identical layout read cheaper.
+   - brand-*  the accent ramp, anchored on brand-500 (#3b82f6, blue) —
+              links, active states, stat numbers, the one colour spent
+              on "this needs you." Swap this ramp's hexes to red or
+              orange to change the accent; don't add a second accent
+              alongside it.
+   - navy-*   true near-black, anchored on navy-900 (#18181b, zinc-900,
+              same family Tailwind's own zinc-* scale uses) — primary
+              buttons, active pills, the wordmark tile.
    --------------------------------------------------------------------- */
 @theme {
   /* Tailwind's own default sans stack, deliberately. No webfont: each OS
@@ -27,36 +25,34 @@
     "Noto Color Emoji";
   --font-mono: "SF Mono", ui-monospace, "JetBrains Mono", "Roboto Mono", Menlo, Consolas, monospace;
 
-  --color-brand-50: #f2f9fe;
-  --color-brand-100: #e8f4fd;
-  --color-brand-200: #cbe8fb;
-  --color-brand-300: #9ad4f7;
-  --color-brand-400: #56b6f0;
-  --color-brand-500: #1f9ae9;
-  --color-brand-600: #0989e5;
-  --color-brand-700: #0770bd;
-  --color-brand-800: #0a5a94;
-  --color-brand-900: #0b4a76;
+  --color-brand-50: #eff6ff;
+  --color-brand-100: #dbeafe;
+  --color-brand-200: #bfdbfe;
+  --color-brand-300: #93c5fd;
+  --color-brand-400: #60a5fa;
+  --color-brand-500: #3b82f6;
+  --color-brand-600: #2563eb;
+  --color-brand-700: #1d4ed8;
+  --color-brand-800: #1e40af;
+  --color-brand-900: #1e3a8a;
 
-  --color-navy-500: #24499b;
-  --color-navy-600: #16388a;
-  --color-navy-700: #0b2c7a;
-  --color-navy-800: #04256e;
-  --color-navy-900: #012167;
+  --color-navy-500: #71717a;
+  --color-navy-600: #52525b;
+  --color-navy-700: #3f3f46;
+  --color-navy-800: #27272a;
+  --color-navy-900: #18181b;
 
-  --color-ink-900: #09172b;
-  --color-ink-700: #1e2f47;
-  --color-body-600: #41566c;
-  /* Was #6a7c92 (4.13:1 on --color-page) — fails WCAG AA's 4.5:1 for
-     normal text, and this is used at 11-13px everywhere (labels, hints,
-     footnotes), sizes small enough that the strict threshold applies.
-     #607288 measures 4.76:1 against --color-page: same blue-slate
-     direction, enough darker to pass with a small margin, still visibly
-     lighter than body-600 so the two-tier system still reads as two tiers. */
-  --color-body-500: #607288;
+  --color-ink-900: #18181b;
+  --color-ink-700: #3f3f46;
+  --color-body-600: #52525b;
+  /* #68686e measures 4.9:1 against --color-page (white) — clears WCAG
+     AA's 4.5:1 for the 11-13px labels/hints/footnotes this token is
+     used at, same true-grey direction as body-600, just lighter so the
+     two-tier system still reads as two tiers. */
+  --color-body-500: #68686e;
 
-  --color-page: #fafbfc;
-  --color-section: #f8fafc;
+  --color-page: #ffffff;
+  --color-section: #f6f6f7;
 
   /* Headline scale. 48px at line-height 51.84px is the reference site's
      hero exactly — a ~1.08 ratio, far tighter than Tailwind's default,
@@ -127,11 +123,11 @@
     transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  /* The signature hero-word treatment: navy-to-blue clipped to the glyphs.
+  /* The signature hero-word treatment: ink-to-blue clipped to the glyphs.
      Reserved for one or two words in a major heading — run it across a
      whole sentence and it stops reading as an accent and starts reading
-     as a gradient. Dark mode lifts both stops, because navy on near-black
-     is unreadable. */
+     as a gradient. Dark mode lifts both stops, because dark ink on
+     near-black is unreadable. */
   .text-gradient-brand {
     background-image: linear-gradient(135deg, var(--color-navy-900), var(--color-brand-600));
     -webkit-background-clip: text;

@@ -337,6 +337,7 @@ export function deriveAccounts(signals, companies = [], logoByKey = new Map(), n
         description: tracked?.description ?? null,
         businessModel: tracked?.businessModel ?? null,
         offerings: tracked?.offerings ?? [],
+        competitivePosition: tracked?.competitivePosition ?? null,
         headquarters: tracked?.headquarters ?? null,
         employeeCount: tracked?.employeeCount ?? null,
         employeeGrowth: tracked?.employeeGrowth ?? null,

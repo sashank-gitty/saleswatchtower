@@ -22,8 +22,13 @@ import {
   groupDistribution,
 } from "../lib/accountBrief.js"
 import { accountImpact, outreachAngles } from "../lib/signalInsights.js"
+import { useOrgChart } from "../lib/useOrgChart.js"
+import { useMyCompany } from "../lib/useMyCompany.js"
+import { strategicAngles } from "../lib/strategicAngles.js"
 import { Citations } from "../components/Citation.jsx"
 import AccountChat from "../components/AccountChat.jsx"
+import OrgChartPanel from "../components/OrgChartPanel.jsx"
+import MeddpiccPanel from "../components/MeddpiccPanel.jsx"
 import {
   Card,
   Button,
@@ -78,6 +83,8 @@ const TABS = [
   { id: "signals", label: "Signals" },
   { id: "value", label: "Value" },
   { id: "prep", label: "Prep" },
+  { id: "orgchart", label: "Org Chart" },
+  { id: "meddpicc", label: "MEDDPICC" },
   { id: "sentiment", label: "Sentiment" },
   { id: "contacts", label: "Contacts" },
   { id: "tech", label: "Tech" },
@@ -211,6 +218,9 @@ function TrendStat({ trend }) {
 function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, onToggleClaim, sentiment, contacts = [] }) {
   const [tab, setTab] = useState("overview")
   const [group, setGroup] = useState("all")
+  const orgChart = useOrgChart(account?.key)
+  const { profile: myCompany } = useMyCompany()
+  const approachAngles = useMemo(() => strategicAngles(myCompany), [myCompany])
 
   // Citation numbering is assigned once, over the account's signals in
   // display order, so a given signal carries the same number in every
@@ -750,7 +760,70 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
       )}
 
       {tab === "value" && (
-        <Card className="p-5">
+        <div className="space-y-5">
+          <Card className="p-5">
+            <SectionTitle hint="From the research pipeline that runs once an account is tracked — what they do, how they make money, their product, and how they stack up against named competitors.">
+              Company Snapshot
+            </SectionTitle>
+            {!account.description && !account.businessModel && account.offerings.length === 0 && !account.competitivePosition ? (
+              <NotIngested
+                title="No company snapshot yet"
+                note={
+                  account.managed
+                    ? "The research pipeline runs once when a company is first tracked — this can take up to a minute. Check back shortly, or hit Refresh above."
+                    : "This account isn't tracked yet — the research pipeline only runs for tracked companies. Track this account to get one."
+                }
+                sources={["What they do", "Revenue stream", "Product", "Competitive position"]}
+              />
+            ) : (
+              <dl className="space-y-4">
+                {account.description && (
+                  <div>
+                    <dt className="text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">What they do</dt>
+                    <dd className="mt-0.5 text-dense text-body-600 dark:text-zinc-300">{account.description}</dd>
+                  </div>
+                )}
+                {account.businessModel && (
+                  <div>
+                    <dt className="text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Revenue stream</dt>
+                    <dd className="mt-0.5 text-dense text-body-600 dark:text-zinc-300">{account.businessModel}</dd>
+                  </div>
+                )}
+                {account.offerings.length > 0 && (
+                  <div>
+                    <dt className="text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Product</dt>
+                    <dd className="mt-1.5 flex flex-wrap gap-1.5">
+                      {account.offerings.map((o) => (
+                        <Pill key={o} tone="slate">{o}</Pill>
+                      ))}
+                    </dd>
+                  </div>
+                )}
+                {account.competitivePosition && (
+                  <div>
+                    <dt className="text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">Competitive position</dt>
+                    <dd className="mt-0.5 text-dense text-body-600 dark:text-zinc-300">{account.competitivePosition}</dd>
+                  </div>
+                )}
+              </dl>
+            )}
+          </Card>
+
+          <Card className="p-5">
+            <SectionTitle hint="Generic strategic framings, not a claim about this specific account — reordered to match leadership's stated priorities (Settings' My Company) when you've set one.">
+              Suggested Approach
+            </SectionTitle>
+            <div className="space-y-3">
+              {approachAngles.map((a, i) => (
+                <div key={a.id} className={`rounded-lg border p-3 ${i === 0 && myCompany?.strategicPriorities ? "border-brand-300 bg-brand-50/50 dark:border-brand-500/30 dark:bg-brand-500/5" : "border-slate-200 dark:border-zinc-800"}`}>
+                  <p className="text-dense font-bold text-ink-900 dark:text-zinc-50">{a.label}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-body-600 dark:text-zinc-300">{a.rationale}</p>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="p-5">
           <SectionTitle hint="Signals mapped onto a value framework. Tiers with no matching signals are omitted rather than shown empty.">
             Value Pyramid
           </SectionTitle>
@@ -778,7 +851,8 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
               ))}
             </div>
           )}
-        </Card>
+          </Card>
+        </div>
       )}
 
       {tab === "prep" && (
@@ -926,6 +1000,20 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
             </ul>
           </Card>
         </div>
+      )}
+
+      {tab === "orgchart" && (
+        <OrgChartPanel
+          people={orgChart.people}
+          loading={orgChart.loading}
+          onAdd={orgChart.addPerson}
+          onUpdate={orgChart.updatePerson}
+          onRemove={orgChart.removePerson}
+        />
+      )}
+
+      {tab === "meddpicc" && (
+        <MeddpiccPanel companyKey={account?.key} companyName={account?.name} orgChartPeople={orgChart.people} />
       )}
 
       {tab === "sentiment" && (

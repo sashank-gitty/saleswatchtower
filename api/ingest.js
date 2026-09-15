@@ -14,7 +14,10 @@ import { companyKey } from "../shared/companyKey.js"
 // the run's real time budget while still keeping one run from trying to
 // backfill dozens of companies at once. Whatever doesn't fit this run
 // picks up on the next daily run — self-healing, not a hard deadline.
-const MAX_LOGOS_PER_RUN = 5
+// Raised from 5: on a daily cron, 5/day meant a real backlog of
+// untracked "discovery" companies took weeks to get real logos —
+// still bounded by the same monthly Claude budget cap either way.
+const MAX_LOGOS_PER_RUN = 20
 
 // Hard cap on LLM normalization calls per run — bounds both cost and
 // Vercel function execution time regardless of how many raw RSS items

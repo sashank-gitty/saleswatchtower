@@ -124,9 +124,25 @@ function pressReleaseQuery(searchName) {
  * wipe out one of the two entirely — those are pure enrichment on top of
  * the company watch, so they're what gets cut under pressure.
  */
+// One extra standing search, adapted to your own company's industry
+// (my_company.industry — set via Settings' "My Company" section) so the
+// By Industry view on Home has something in your own vertical without
+// you having to hand-add it to STANDING_WATCHLIST yourself. Best-effort:
+// no my_company row yet just means no extra term, not an error.
+async function myIndustryQuery() {
+  try {
+    const rows = await sql`SELECT industry FROM my_company WHERE singleton_key = 'me'`
+    const industry = rows[0]?.industry
+    return industry ? [`${industry} industry trends`] : []
+  } catch {
+    return []
+  }
+}
+
 export async function watchlistForRun() {
   const companyQueries = await trackedCompanyQueries()
   const enrichmentQueries = companyQueries.flatMap((name) => [execQuery(name), pressReleaseQuery(name)])
-  const all = [...companyQueries, ...STANDING_WATCHLIST, ...enrichmentQueries]
+  const industryQuery = await myIndustryQuery()
+  const all = [...companyQueries, ...STANDING_WATCHLIST, ...industryQuery, ...enrichmentQueries]
   return all.slice(0, MAX_QUERIES_PER_RUN)
 }

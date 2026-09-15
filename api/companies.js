@@ -11,7 +11,8 @@ export default async function handler(req, res) {
         SELECT
           tc.company_key, tc.company_name, tc.status, tc.is_competitor, tc.note, tc.asx_ticker, tc.stock_ticker, tc.created_at,
           cp.domain, cp.logo_url, cp.industry, cp.description, cp.business_model, cp.offerings,
-          cp.headquarters, cp.employee_count, cp.employee_growth, cp.founded_year, cp.updated_at AS profile_updated_at
+          cp.headquarters, cp.employee_count, cp.employee_growth, cp.founded_year, cp.competitive_position,
+          cp.updated_at AS profile_updated_at
         FROM tracked_companies tc
         LEFT JOIN company_profiles cp ON cp.company_key = tc.company_key
         ORDER BY tc.created_at DESC
@@ -32,6 +33,7 @@ export default async function handler(req, res) {
           description: row.description,
           businessModel: row.business_model,
           offerings: row.offerings ?? [],
+          competitivePosition: row.competitive_position,
           headquarters: row.headquarters,
           employeeCount: row.employee_count,
           employeeGrowth: row.employee_growth,

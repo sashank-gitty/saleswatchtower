@@ -112,7 +112,9 @@ function CreateAlertModal({ open, onClose, onCreate, query, days, group }) {
 }
 
 function Search({ signals, companies = [], logoByKey = new Map(), onOpenSignal }) {
-  const [query, setQuery] = useState("")
+  // Seeded from the URL so a search bar elsewhere (Home) can link
+  // straight to a populated result set instead of an empty page.
+  const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get("q") ?? "")
   const [group, setGroup] = useState("all")
   const [days, setDays] = useState("180")
   const [type, setType] = useState(null)

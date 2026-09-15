@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from "react"
 import TopNav from "./components/TopNav.jsx"
 import SignalDetailPanel from "./components/SignalDetailPanel.jsx"
 import CommandPalette from "./components/CommandPalette.jsx"
+import ResearchOverlay from "./components/ResearchOverlay.jsx"
+import CompanyPriorityPrompt from "./components/CompanyPriorityPrompt.jsx"
 import ErrorState from "./components/ErrorState.jsx"
 import Briefing from "./pages/Briefing.jsx"
 import GlobalFeed from "./pages/GlobalFeed.jsx"
 import Accounts from "./pages/Accounts.jsx"
-import AccountDetail from "./pages/AccountDetail.jsx"
+import AccountsWorkspace from "./pages/AccountsWorkspace.jsx"
 import SearchPage from "./pages/Search.jsx"
 import Alerts from "./pages/Alerts.jsx"
 import Radar from "./pages/Radar.jsx"
@@ -288,20 +290,11 @@ function App() {
           />
         )}
 
-        {route.page === "accounts" && !route.accountId && (
-          <Accounts
-            signals={signals}
-            companies={companies}
-            logoByKey={logoByKey}
-            loading={loading}
-            isClaimed={isTracked}
-            onToggleClaim={setCompany}
-          />
-        )}
-
-        {route.page === "accounts" && route.accountId && (
-          <AccountDetail
-            account={activeAccount}
+        {route.page === "accounts" && (
+          <AccountsWorkspace
+            accounts={accounts}
+            accountId={route.accountId}
+            activeAccount={activeAccount}
             onOpenSignal={openSignal}
             loading={loading}
             isClaimed={isTracked}
@@ -336,7 +329,7 @@ function App() {
         {route.page === "alerts" && <Alerts signals={signals} onOpenSignal={openSignal} />}
 
         {route.page === "settings" && (
-          <Settings theme={theme} onToggleTheme={toggleTheme} signals={signals} />
+          <Settings theme={theme} onToggleTheme={toggleTheme} signals={signals} isTracked={isTracked} onToggleClaim={setCompany} />
         )}
 
         {route.page === "not-found" && (
@@ -377,6 +370,9 @@ function App() {
             : null
         }
       />
+
+      <ResearchOverlay />
+      <CompanyPriorityPrompt />
     </div>
   )
 }

@@ -6,6 +6,7 @@ import { buildSignalReason, actionForReason, REASON_TONE_STYLES } from "../lib/s
 import { accountImpact, whoThisAffects, outreachAngles, scoreMeaning } from "../lib/signalInsights.js"
 import { positioningRead, competitiveWatch, differentiationAngles } from "../lib/competitorInsights.js"
 import { accountKey } from "../lib/accountModel.js"
+import { useMyCompany } from "../lib/useMyCompany.js"
 import { iconForSignal, groupLabel, groupForSignal, toneClassesForSignal } from "../lib/signalGroups.js"
 import { AccountAvatar, Pill, IconBadge, Collapsible, NotIngested } from "./ui.jsx"
 import {
@@ -118,6 +119,7 @@ function SignalDetailPanel({
   const [findOpen, setFindOpen] = useState(false)
   const [activeMatch, setActiveMatch] = useState(0)
   const bodyRef = useRef(null)
+  const { profile: myCompany } = useMyCompany()
 
   useEffect(() => {
     function onKey(e) {
@@ -422,7 +424,7 @@ function SignalDetailPanel({
                     Angles to approach with
                   </p>
                   <ul className="space-y-2.5">
-                    {outreachAngles(item, trackedCompany?.status ?? null).map((a, i) => (
+                    {outreachAngles(item, trackedCompany?.status ?? null, myCompany?.valueProp).map((a, i) => (
                       <li key={i} className="text-dense leading-relaxed text-body-600 dark:text-zinc-300">
                         <span className="font-bold text-ink-900 dark:text-zinc-100">{a.label}.</span> {a.angle}
                       </li>
