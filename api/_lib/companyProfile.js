@@ -110,8 +110,14 @@ export async function researchCompanyProfile(companyName) {
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
       // Bounds real search cost/time per company — one company shouldn't
-      // spiral into an open-ended research session.
-      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 5 }],
+      // spiral into an open-ended research session. Was 5: a real failure
+      // (Snowflake — large, heavily-documented, used every search) ran
+      // past the 55s request timeout below. Most companies finish well
+      // under budget on 2-3 searches anyway; capping at 3 keeps the
+      // worst case (a big, well-covered company) inside the time budget
+      // instead of narrowing the deliberate DB/response margin on the
+      // timeout itself.
+      tools: [{ type: "web_search_20260209", name: "web_search", max_uses: 3 }],
       messages: [{ role: "user", content: `Company name: ${companyName}` }],
     },
     // maxRetries: 0 is load-bearing, not an optimization — confirmed by
