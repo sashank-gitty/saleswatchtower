@@ -4,8 +4,8 @@ import { sql } from "./_lib/db.js"
 // see db/migrations/008 and api/_lib/fetchMarketData.js, which populates
 // this table from Finnhub during the daily ingest run. Current-state
 // (upserted, one row per company_key), unlike company_sentiment's
-// append-only history — no DISTINCT ON needed. Read-only, behind the
-// dashboard's normal Basic auth, same as api/sentiment.js.
+// append-only history — no DISTINCT ON needed. Read-only, same as
+// api/sentiment.js.
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.status(405).json({ error: "Method not allowed" })

@@ -91,9 +91,9 @@ guessing.
 
 Runs on Vercel by default. `server/index.mjs` (zero-dependency), the
 `Dockerfile`, and `npm run ingest` are everything needed to run it
-anywhere else — see **[HOSTING.md](./HOSTING.md)** for self-hosting, TLS,
-and the authentication you need before pointing a real domain at it (there
-is none by default).
+anywhere else — see **[HOSTING.md](./HOSTING.md)** for self-hosting and
+TLS. There's no login screen: anyone with the URL can open the dashboard,
+by design — this is a single-user tool with no sensitive data behind it.
 
 ## Data pipeline
 
@@ -164,8 +164,6 @@ Tracked companies (the thing that drives everything):
    - `CRON_SECRET` — any random string you generate; Vercel automatically
      sends it as `Authorization: Bearer $CRON_SECRET` when invoking the
      cron job.
-   - `DASHBOARD_PASSWORD` — required, or nothing serves. See
-     [HOSTING.md](./HOSTING.md) for the full auth setup.
 4. **Run the migrations**: open the Neon/Postgres query editor in the
    Vercel dashboard and run each file in `db/migrations/` in order.
 5. **Add your first company**: open the deployed app, go to My Accounts,

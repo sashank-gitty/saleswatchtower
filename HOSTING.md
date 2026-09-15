@@ -63,9 +63,10 @@ docker run -d --name sdr-dashboard \
   sdr-dashboard
 ```
 
-Binding to `127.0.0.1` deliberately: the app has **no authentication** (see
-the security note below), so it should never be directly exposed. Put a
-reverse proxy in front that terminates TLS and adds a password.
+Binding to `127.0.0.1` and putting a reverse proxy in front for TLS
+(below) rather than exposing port 3000 directly — same reasoning as
+running any plain HTTP app behind Caddy/nginx, unrelated to authentication
+(there is none, by design — see the note below).
 
 `docker-compose.yml`, if you prefer:
 
@@ -89,9 +90,6 @@ certificates automatically. A complete `Caddyfile`:
 ```
 signals.yourdomain.com {
     reverse_proxy 127.0.0.1:3000
-    basicauth {
-        you $2a$14$...   # caddy hash-password
-    }
 }
 ```
 
@@ -171,41 +169,18 @@ reaches a build.
 
 ---
 
-## Security: read this before pointing a domain at it
+## Security
 
-**The whole deployment is behind HTTP Basic auth**, and it **fails closed** —
-with `DASHBOARD_PASSWORD` unset every request gets a 503 rather than being
-served. Two env vars control it:
+**There is no login screen, on Vercel or self-hosted.** That's a deliberate
+choice, not an oversight — anyone with the URL can open the dashboard.
+`CRON_SECRET` still protects `/api/ingest` specifically (it checks for that
+exact value as a Bearer token), since that route is meant to be called by
+your scheduler, not a browser. Set it to a real random value regardless.
 
-| Var | Required | Default |
-|---|---|---|
-| `DASHBOARD_PASSWORD` | **yes** — nothing serves without it | — |
-| `DASHBOARD_USER` | no | `sdr` |
-
-On Vercel this is `middleware.js`, which runs at the edge before any static
-asset or `/api/*` function. Self-hosted it is `checkAuth()` in
-`server/index.mjs`. Both exempt exactly one path: `/api/ingest`, which
-authenticates with `CRON_SECRET` instead (Vercel Cron sends it as a Bearer
-token, and Basic auth in front would reject that header before the route saw
-it). Set `CRON_SECRET` to a real random value.
-
-Basic auth is deliberate rather than a placeholder: this is a single-user
-tool, the browser remembers the credential, and it needs no session
-store, no user table and no login UI. If it ever goes wider than just you,
-replace it with a real identity provider — but do not remove it and leave
-nothing.
-
-**Why it matters.** The whole point of this app is a list of companies
-you're personally tracking, with your own notes on why — that's not
-information you want sitting on an open port. Keep it behind auth.
-
-Pick one, before it's reachable:
-
-1. **HTTP basic auth at the proxy** (the Caddy snippet above). Two
-   minutes, no code, good enough for personal use.
-2. **A private network** — Tailscale or WireGuard, and never expose 443
-   publicly at all. Best if it's only ever you.
-3. **A real login.** Only worth it if you're sharing this with a team.
+If that ever stops being the right tradeoff — the tracked-company list or
+notes become sensitive, or you're sharing this with other people — put a
+private network in front instead of code changes: Tailscale or WireGuard,
+never exposing the port publicly at all.
 
 ---
 
@@ -218,10 +193,9 @@ Pick one, before it's reachable:
    `CRON_SECRET`.
 4. Deploy. Verify `/`, a deep link like `/accounts/<key>`, and
    `/api/signals`.
-5. Put auth in front of it **before** the DNS record propagates.
-6. Add the ingest schedule. Run it once by hand and read the summary.
-7. Watch one scheduled run land.
-8. Only then remove the Vercel project — keep it until the new host has
+5. Add the ingest schedule. Run it once by hand and read the summary.
+6. Watch one scheduled run land.
+7. Only then remove the Vercel project — keep it until the new host has
    completed an ingest cycle, so rollback stays a DNS change.
 
 ## What to keep from Vercel

@@ -1,5 +1,4 @@
 import { createServer } from "node:http"
-import { timingSafeEqual } from "node:crypto"
 import { readFile, stat } from "node:fs/promises"
 import { extname, join, normalize, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
@@ -22,50 +21,6 @@ const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)))
 const DIST = join(ROOT, "dist")
 const PORT = Number(process.env.PORT ?? 3000)
 const HOST = process.env.HOST ?? "0.0.0.0"
-
-// Same Basic-auth gate the Vercel deployment gets from middleware.js,
-// so the self-hosted path isn't the insecure one. Fails closed: without
-// DASHBOARD_PASSWORD every request gets a 503 rather than being served.
-// /api/ingest is exempt because it authenticates with CRON_SECRET.
-function checkAuth(req, res, pathname) {
-  if (pathname === "/api/ingest") return true
-
-  const expectedPassword = process.env.DASHBOARD_PASSWORD
-  const expectedUser = process.env.DASHBOARD_USER ?? "sdr"
-
-  if (!expectedPassword) {
-    res.statusCode = 503
-    res.setHeader("Content-Type", "text/plain; charset=utf-8")
-    res.end(
-      "Dashboard is not configured.\n\nSet DASHBOARD_PASSWORD (and optionally DASHBOARD_USER,\n" +
-        "default \"sdr\") in this process's environment, then restart.\n",
-    )
-    return false
-  }
-
-  const header = req.headers.authorization ?? ""
-  let ok = false
-  if (header.toLowerCase().startsWith("basic ")) {
-    const decoded = Buffer.from(header.slice(6).trim(), "base64").toString("utf8")
-    const separator = decoded.indexOf(":")
-    if (separator !== -1) {
-      const user = decoded.slice(0, separator)
-      const password = decoded.slice(separator + 1)
-      const a = Buffer.from(`${user}:${password}`)
-      const b = Buffer.from(`${expectedUser}:${expectedPassword}`)
-      ok = a.length === b.length && timingSafeEqual(a, b)
-    }
-  }
-
-  if (!ok) {
-    res.statusCode = 401
-    res.setHeader("WWW-Authenticate", 'Basic realm="SDR Dashboard", charset="UTF-8"')
-    res.setHeader("Content-Type", "text/plain; charset=utf-8")
-    res.end("Authentication required.\n")
-    return false
-  }
-  return true
-}
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -188,8 +143,6 @@ const server = createServer(async (req, res) => {
 
   const url = new URL(req.url, `http://${req.headers.host ?? "localhost"}`)
   const pathname = url.pathname
-
-  if (!checkAuth(req, res, pathname)) return
 
   try {
     if (pathname.startsWith("/api/")) {
