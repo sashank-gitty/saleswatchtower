@@ -411,7 +411,7 @@ async function handleMyCompany(req, res) {
         return
       }
       console.error("my-company research failed for", companyName, err)
-      res.status(500).json({ error: "Failed to research company" })
+      res.status(500).json({ error: "Failed to research company", detail: err?.message })
     }
     return
   }
