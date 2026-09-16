@@ -221,7 +221,7 @@ function GlobalFeed({ signals, companies = [], logoByKey = new Map(), loading, o
   return (
     <>
       <PageHeader
-        title="Global Feed"
+        title="Market Pulse"
         actions={
           <Button variant="outline" onClick={handleExport} disabled={!filteredAccounts.length}>
             <DownloadIcon className="h-4 w-4" />

@@ -28,7 +28,7 @@ const NAV_ITEMS = [
   // destination; /radar still resolves, just isn't linked from the nav
   // anymore, same pattern as the older "My Accounts" removal below.
   { page: "briefing", href: "/briefing", label: "Home", Icon: SunriseIcon },
-  { page: "feed", href: "/feed", label: "Global Feed", Icon: FeedIcon },
+  { page: "feed", href: "/feed", label: "Market Pulse", Icon: FeedIcon },
   { page: "competitors", href: "/competitors", label: "Competitors", Icon: TargetIcon },
   // "My Accounts" used to be its own item here, right next to this one —
   // two nearly-identical nav labels that looked like they might mean

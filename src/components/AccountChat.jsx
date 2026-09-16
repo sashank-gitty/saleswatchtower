@@ -64,7 +64,7 @@ function AccountChat({ companyName, signals }) {
   }
 
   return (
-    <Card className="mb-5 p-5">
+    <Card className="mt-4 mb-5 p-5">
       <div className="mb-3 flex items-center gap-2">
         <SparklesIcon className="h-4 w-4 text-brand-600 dark:text-brand-400" />
         <h2 className="text-dense font-bold text-ink-900 dark:text-zinc-50">Ask about {companyName}</h2>

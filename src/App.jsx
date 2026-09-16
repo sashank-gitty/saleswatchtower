@@ -24,6 +24,7 @@ import { useSentiment } from "./lib/useSentiment.js"
 import { useMarketData } from "./lib/useMarketData.js"
 import { useContacts } from "./lib/useContacts.js"
 import { useCompanyLogos } from "./lib/useCompanyLogos.js"
+import { useMyCompany } from "./lib/useMyCompany.js"
 import { Button } from "./components/ui.jsx"
 
 function App() {
@@ -123,6 +124,23 @@ function App() {
   const { marketDataFor } = useMarketData()
   const { contactsFor } = useContacts()
   const { logos } = useCompanyLogos()
+  const { profile: myCompanyProfile, save: saveMyCompany } = useMyCompany()
+
+  // Auto-populate the Competitors tab from your org's researched
+  // competitor list, instead of requiring a manual "add" click per
+  // competitor in Settings — this is what makes switching "my company"
+  // in TopNav immediately repopulate Competitors. Runs whenever the
+  // profile changes (initial load or a fresh org switch); once every
+  // competitor is marked `added`, the next run is a no-op, so this
+  // can't loop against saveMyCompany's own profile update.
+  useEffect(() => {
+    const pending = myCompanyProfile?.competitors?.filter((c) => !c.added) ?? []
+    if (pending.length === 0) return
+    pending.forEach((c) => setCompany(accountKey(c.name), c.name, true, { isCompetitor: true }))
+    saveMyCompany({
+      competitors: myCompanyProfile.competitors.map((c) => (pending.includes(c) ? { ...c, added: true } : c)),
+    }).catch(() => {})
+  }, [myCompanyProfile])
   // Every account's logo, tracked or not (api/company-logos.js) — a
   // separate lookup from `companies` (tracked_companies only) since a
   // logo now exists for far more accounts than the tracked list covers.
@@ -244,7 +262,7 @@ function App() {
         unreadCount={unreadCount}
       />
 
-      <main className="mx-auto max-w-[1600px] px-4 py-6 sm:px-6">
+      <main className="px-4 py-6 sm:px-6">
         {route.page === "briefing" && (
           <Briefing
             signals={signals}
