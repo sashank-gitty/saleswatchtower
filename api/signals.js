@@ -23,6 +23,7 @@ export default async function handler(req, res) {
         signal_type AS "signalType",
         origin,
         outreach_relevance AS "outreachRelevance",
+        region_relevance AS "regionRelevance",
         matched_companies AS "matchedCompanies",
         (reviewed_at IS NOT NULL) AS reviewed,
         created_at AS "createdAt"

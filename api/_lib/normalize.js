@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk"
-import { SIGNAL_TYPES, SCOPES } from "../../shared/signalTypes.js"
+import { SIGNAL_TYPES, SCOPES, REGIONS } from "../../shared/signalTypes.js"
 import { RELEVANCE_RUBRIC } from "../../shared/relevanceRubric.js"
 import { MONTHLY_BUDGET_USD, monthToDateSpend, recordSpend } from "./budget.js"
 
@@ -23,6 +23,7 @@ Given a raw news headline + snippet, output ONLY a single JSON object (no prose,
 - "signalType": prefer one of exactly these labels when it genuinely fits: ${SIGNAL_TYPES.map((t) => `"${t}"`).join(", ")}. Only invent a new short label if none of these fit at all. Use "new entrant" for a company entering a new market or region it wasn't previously operating in. Set "scope" to "micro" for these: they are about one named company, even when the company is unfamiliar or headquartered elsewhere.
 - "summary": 2-3 sentences, written for someone deciding whether this is worth an outreach touch — state what happened, then why it matters for someone who might sell to, partner with, or compete against this company. Match a professional analyst tone. Do not fabricate details not present in the source text.
 - "outreachRelevance": integer 1-5. ${RELEVANCE_RUBRIC}
+- "regionRelevance": one of ${REGIONS.map((r) => `"${r}"`).join(", ")}. This dashboard's user is in Australia/New Zealand (ANZ). Use "anz" when the story is specifically about ANZ operations, leadership, market entry, or regulation. Use "global" when it matters regardless of region — major M&A, a top-level (global CEO/CFO) leadership change, a funding round, company-wide earnings. Use "other" when the story is tied to a specific region other than ANZ with no clear ANZ angle (e.g. a UK-only leadership appointment, a US-only regulatory action).
 
 If the input is too thin, purely local human-interest news with no business angle, or you cannot confidently identify a single entity, respond with exactly: {"skip": true}
 
@@ -87,5 +88,11 @@ export async function normalizeItem({ title, snippet, matchedQuery }) {
     return null
   }
 
-  return { ...parsed, outreachRelevance: relevance }
+  // Not required the way the fields above are — an unrecognized or
+  // missing region shouldn't drop an otherwise-good signal, it just
+  // means this one won't be filterable by region (falls back to "global"
+  // treatment: shown everywhere, like the pre-region-tagging rows).
+  const regionRelevance = REGIONS.includes(parsed.regionRelevance) ? parsed.regionRelevance : null
+
+  return { ...parsed, outreachRelevance: relevance, regionRelevance }
 }

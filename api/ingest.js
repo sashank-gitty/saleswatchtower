@@ -151,7 +151,7 @@ export default async function handler(req, res) {
 
           const dedupeKey = raw.sourceUrl
           await sql`
-            INSERT INTO signals (id, headline, summary, source_url, date, scope, entity, signal_type, origin, dedupe_key, outreach_relevance, matched_companies)
+            INSERT INTO signals (id, headline, summary, source_url, date, scope, entity, signal_type, origin, dedupe_key, outreach_relevance, matched_companies, region_relevance)
             VALUES (
               ${idFor(dedupeKey)},
               ${cleanTitle(raw.title)},
@@ -164,7 +164,8 @@ export default async function handler(req, res) {
               'news',
               ${dedupeKey},
               ${normalized.outreachRelevance},
-              ${matchedCompanies}
+              ${matchedCompanies},
+              ${normalized.regionRelevance}
             )
             ON CONFLICT (dedupe_key) DO NOTHING
           `
@@ -202,7 +203,7 @@ export default async function handler(req, res) {
 
       try {
         await sql`
-          INSERT INTO signals (id, headline, summary, source_url, date, scope, entity, signal_type, origin, dedupe_key, outreach_relevance, matched_companies)
+          INSERT INTO signals (id, headline, summary, source_url, date, scope, entity, signal_type, origin, dedupe_key, outreach_relevance, matched_companies, region_relevance)
           VALUES (
             ${idFor(filing.dedupeKey, "filing")},
             ${filing.headline},
@@ -219,7 +220,11 @@ export default async function handler(req, res) {
             -- outreach trigger, not something worth a per-item Claude
             -- call to score.
             4,
-            ${[filing.companyName]}
+            ${[filing.companyName]},
+            -- The ASX is the Australian Securities Exchange — a filing
+            -- lodged there is inherently ANZ-relevant, no judgment call
+            -- needed.
+            'anz'
           )
           ON CONFLICT (dedupe_key) DO NOTHING
         `

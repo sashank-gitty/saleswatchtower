@@ -16,7 +16,6 @@ import {
   TabStrip,
   SearchInput,
 } from "../components/ui.jsx"
-import SignalRow from "../components/SignalRow.jsx"
 import AccountBlock from "../components/AccountBlock.jsx"
 import Checkbox from "../components/Checkbox.jsx"
 
@@ -157,9 +156,19 @@ function TypeBreakdown({ typeCounts }) {
   )
 }
 
+// Signals lack a region tag until normalize.js's regionRelevance rollout
+// reaches them (existing rows are NULL, see migration 014) — treat
+// untagged the same as "global" so nothing already in the feed
+// disappears the moment this filter shipped.
+function passesAnzFilter(signal, anzOnly) {
+  return !anzOnly || signal.regionRelevance !== "other"
+}
+
 function Briefing({ signals, companies = [], accounts = [], loading, onOpenSignal, onToggleReviewed, onMarkManyReviewed }) {
   const ingestStatus = useIngestStatus()
-  const briefing = computeBriefing(signals)
+  const [anzOnly, setAnzOnly] = useState(true)
+  const scopedSignals = useMemo(() => signals.filter((s) => passesAnzFilter(s, anzOnly)), [signals, anzOnly])
+  const briefing = computeBriefing(scopedSignals)
 
   // The one thing to look at first. accounts is already sorted highest
   // score first (accountModel.js), so the first match in each fallback
@@ -255,11 +264,10 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
     tabsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
   }
 
-  // Select-all / bulk-mark-reviewed operates over whichever lens is on
-  // screen — Your Accounts and By Industry show the same underlying
-  // signals regrouped, so they share a set; Macro Trends is a genuinely
-  // different set of signals.
-  const visibleSignals = homeTab === "macro" ? macroSignals : accountsFlat
+  // Your Accounts and By Industry show the same underlying signals
+  // regrouped, so select-all/bulk-mark-reviewed shares one set across
+  // both tabs.
+  const visibleSignals = accountsFlat
 
   const [selectedIds, setSelectedIds] = useState(() => new Set())
 
@@ -420,11 +428,25 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
           </div>
 
           <div ref={tabsSectionRef} className="mb-2 flex flex-wrap items-center justify-between gap-2 scroll-mt-16">
-            <SectionTitle hint="Everything ingested in the last 24 hours, split three ways: broad industry news, grouped by vertical, and grouped by your own tracked accounts.">
+            <SectionTitle hint="Everything ingested in the last 24 hours, split two ways: grouped by vertical, and grouped by your own tracked accounts.">
               New Since Yesterday
             </SectionTitle>
-            {visibleSignals.length > 0 && (
-              <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setAnzOnly((v) => !v)}
+                aria-pressed={anzOnly}
+                title="Hide news tied to a specific non-ANZ region (e.g. a UK-only leadership change)"
+                className={`rounded-full border px-3 py-1 text-2xs font-semibold transition-colors ${
+                  anzOnly
+                    ? "border-transparent bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
+                    : "border-slate-200 text-body-600 hover:border-slate-300 dark:border-zinc-700 dark:text-zinc-300"
+                }`}
+              >
+                ANZ focus
+              </button>
+              {visibleSignals.length > 0 && (
+                <div className="flex items-center gap-2">
                 <div
                   onClick={toggleSelectAll}
                   className="flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
@@ -446,8 +468,9 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
                     Mark {selectedIds.size} Reviewed
                   </button>
                 )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
           {briefing.newSinceYesterday.length === 0 ? (
             <Card className="mb-8">
@@ -468,7 +491,6 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
                 tabs={[
                   { id: "accounts", label: "Your Accounts", count: accountsFlat.length },
                   { id: "industry", label: "By Industry", count: newAccountGroups.length },
-                  { id: "macro", label: "Macro Trends", count: macroSignals.length },
                 ]}
                 active={homeTab}
                 onChange={setHomeTab}
@@ -534,35 +556,6 @@ function Briefing({ signals, companies = [], accounts = [], loading, onOpenSigna
                         ))}
                       </div>
                     ))
-                  )}
-                </Card>
-              )}
-
-              {homeTab === "macro" && (
-                <Card className="mb-8 overflow-hidden">
-                  {macroSignals.length === 0 ? (
-                    <EmptyState
-                      title="No macro-scope news today"
-                      description="Broad industry/market signals (not tied to one company) show up here when the overnight run finds any."
-                    />
-                  ) : (
-                    <div className="flex flex-col gap-1 p-1.5">
-                      {macroSignals.map((signal) => (
-                        <SignalRow
-                          key={signal.id}
-                          item={signal}
-                          companies={companies}
-                          reviewed={signal.reviewed}
-                          onToggleReviewed={onToggleReviewed}
-                          onOpen={onOpenSignal}
-                          selected={selectedIds.has(signal.id)}
-                          onToggleSelect={toggleSelectOne}
-                          showCheckbox
-                          compact
-                          hideEntity
-                        />
-                      ))}
-                    </div>
                   )}
                 </Card>
               )}

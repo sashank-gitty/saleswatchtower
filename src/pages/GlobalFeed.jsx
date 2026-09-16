@@ -90,6 +90,9 @@ function GlobalFeed({ signals, companies = [], logoByKey = new Map(), loading, o
   const [matchedOnly, setMatchedOnly] = useState(
     () => new URLSearchParams(window.location.search).get("matched") === "1",
   )
+  // Default on — untagged (pre-migration) signals still pass, since a
+  // missing regionRelevance is treated as "global", not "other".
+  const [anzOnly, setAnzOnly] = useState(true)
   const [group, setGroup] = useState("all")
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
@@ -97,7 +100,10 @@ function GlobalFeed({ signals, companies = [], logoByKey = new Map(), loading, o
   const quickFilters = { unreviewedOnly, highRelevanceOnly, matchedOnly }
   const anyQuickFilterActive = unreviewedOnly || highRelevanceOnly || matchedOnly
 
-  const scoped = useMemo(() => signals.filter((s) => withinRange(s, range)), [signals, range])
+  const scoped = useMemo(
+    () => signals.filter((s) => withinRange(s, range) && (!anzOnly || s.regionRelevance !== "other")),
+    [signals, range, anzOnly],
+  )
 
   const accounts = useMemo(() => deriveAccounts(scoped, companies, logoByKey), [scoped, companies, logoByKey])
 
@@ -134,6 +140,10 @@ function GlobalFeed({ signals, companies = [], logoByKey = new Map(), loading, o
 
   const groupCounts = useMemo(() => countByGroup(scoped), [scoped])
 
+  // Empty categories hidden — with 8 possible groups, showing every one
+  // regardless of whether it has anything in it just adds tabs nobody can
+  // click into. The currently-active tab stays visible even at zero, so
+  // switching filters doesn't yank the selected tab out from under you.
   const tabs = useMemo(
     () => [
       { id: "all", label: "All", count: groupCounts.all },
@@ -143,9 +153,9 @@ function GlobalFeed({ signals, companies = [], logoByKey = new Map(), loading, o
         count: groupCounts[g.id] ?? 0,
         Icon: g.Icon,
         tone: toneClassesForGroup(g.id).badge,
-      })),
+      })).filter((t) => t.count > 0 || t.id === group),
     ],
-    [groupCounts],
+    [groupCounts, group],
   )
 
   const pageAccounts = sortedAccounts.slice(page * pageSize, (page + 1) * pageSize)
@@ -246,6 +256,22 @@ function GlobalFeed({ signals, companies = [], logoByKey = new Map(), loading, o
                 </span>
               )}
               <ChevronDownIcon className={`h-3.5 w-3.5 transition-transform ${filtersOpen ? "rotate-180" : ""}`} />
+            </button>
+          </div>
+
+          <div className="mt-2.5 flex items-center">
+            <button
+              type="button"
+              onClick={() => setAnzOnly((v) => !v)}
+              aria-pressed={anzOnly}
+              title="Hide news tied to a specific non-ANZ region (e.g. a UK-only leadership change)"
+              className={`rounded-full border px-3 py-1 text-2xs font-semibold transition-colors ${
+                anzOnly
+                  ? "border-transparent bg-brand-100 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
+                  : "border-slate-200 text-body-600 hover:border-slate-300 dark:border-zinc-700 dark:text-zinc-300"
+              }`}
+            >
+              ANZ focus
             </button>
           </div>
 

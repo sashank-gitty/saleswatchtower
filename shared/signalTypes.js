@@ -23,3 +23,11 @@ export const SIGNAL_TYPES = [
 ]
 
 export const SCOPES = ["macro", "micro"]
+
+// Where a signal is geographically relevant — set by normalize.js
+// alongside the other fields. "anz" = specifically about ANZ operations,
+// leadership, market, or regulation. "global" = matters regardless of
+// region (major M&A, top-level CEO change, funding, earnings). "other" =
+// tied to a different region with no clear ANZ angle (e.g. a UK-only
+// leadership change at a global company).
+export const REGIONS = ["anz", "global", "other"]

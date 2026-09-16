@@ -238,6 +238,15 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
   const news = useMemo(() => (account ? topNews(account.signals) : []), [account])
   const pyramid = useMemo(() => (account ? valuePyramid(account.signals) : []), [account])
   const buckets = useMemo(() => (account ? bucketByRecency(account.signals) : []), [account])
+  const [expandedBucketIds, setExpandedBucketIds] = useState(() => new Set())
+  const toggleBucketExpanded = (bucketId) => {
+    setExpandedBucketIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(bucketId)) next.delete(bucketId)
+      else next.add(bucketId)
+      return next
+    })
+  }
   const distribution = useMemo(() => (account ? groupDistribution(account.signals) : []), [account])
   const questions = useMemo(() => (account ? discoveryQuestionsFor(account.signals) : []), [account])
   const groupCounts = useMemo(() => (account ? countByGroup(account.signals) : {}), [account])
@@ -458,31 +467,60 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
                 Signal Timeline
               </SectionTitle>
               <div className="space-y-4">
-                {buckets.map((bucket) => (
-                  <div key={bucket.id}>
-                    <p className="mb-1.5 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
-                      {bucket.label}
-                    </p>
-                    <ul className="space-y-1">
-                      {bucket.signals.map((signal) => (
-                        <li key={signal.id}>
-                          <button
-                            type="button"
-                            onClick={() => onOpenSignal(signal.id)}
-                            className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-body-600 transition-colors hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-800/40"
-                          >
-                            <IconBadge
-                              icon={iconForSignal(signal)}
-                              tone={toneClassesForSignal(signal).badge}
-                              size="sm"
-                            />
-                            <span className="min-w-0 flex-1 truncate">{signal.headline}</span>
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
+                {buckets.map((bucket) => {
+                  // Highest-relevance signals first within the bucket, capped
+                  // to 5 by default with an expand — an account with 31
+                  // signals in one bucket used to render all 31 here.
+                  const sorted = [...bucket.signals].sort(
+                    (a, b) => (b.outreachRelevance ?? 0) - (a.outreachRelevance ?? 0),
+                  )
+                  const isExpanded = expandedBucketIds.has(bucket.id)
+                  const visible = isExpanded ? sorted : sorted.slice(0, 5)
+                  const hiddenCount = sorted.length - visible.length
+                  return (
+                    <div key={bucket.id}>
+                      <p className="mb-1.5 text-2xs font-semibold uppercase tracking-wider text-slate-400 dark:text-zinc-500">
+                        {bucket.label}
+                      </p>
+                      <ul className="space-y-1">
+                        {visible.map((signal) => (
+                          <li key={signal.id}>
+                            <button
+                              type="button"
+                              onClick={() => onOpenSignal(signal.id)}
+                              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs text-body-600 transition-colors hover:bg-slate-50 dark:text-zinc-300 dark:hover:bg-zinc-800/40"
+                            >
+                              <IconBadge
+                                icon={iconForSignal(signal)}
+                                tone={toneClassesForSignal(signal).badge}
+                                size="sm"
+                              />
+                              <span className="min-w-0 flex-1 truncate">{signal.headline}</span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      {hiddenCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleBucketExpanded(bucket.id)}
+                          className="mt-1 px-2 text-2xs font-semibold text-brand-600 hover:underline dark:text-brand-400"
+                        >
+                          Show all {sorted.length}
+                        </button>
+                      )}
+                      {isExpanded && sorted.length > 5 && (
+                        <button
+                          type="button"
+                          onClick={() => toggleBucketExpanded(bucket.id)}
+                          className="mt-1 px-2 text-2xs font-semibold text-slate-500 hover:underline dark:text-zinc-400"
+                        >
+                          Show less
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </Card>
 
