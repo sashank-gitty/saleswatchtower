@@ -122,7 +122,7 @@ function App() {
   const { companies, isTracked, trackedAt, setCompany } = useCompanies()
   const { sentimentFor } = useSentiment()
   const { marketDataFor } = useMarketData()
-  const { contactsFor } = useContacts()
+  const { contactsFor, findContacts } = useContacts()
   const { logos } = useCompanyLogos()
   const { profile: myCompanyProfile, save: saveMyCompany } = useMyCompany()
 
@@ -320,6 +320,7 @@ function App() {
             onToggleClaim={setCompany}
             sentiment={sentimentFor(activeAccount?.key)}
             contacts={contactsFor(activeAccount?.key)}
+            onFindContacts={findContacts}
           />
         )}
 

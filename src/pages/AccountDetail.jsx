@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { linkProps, navigate } from "../lib/router.js"
 import { pillClassForSignalType } from "../lib/colors.js"
 import { HIGH_RELEVANCE_THRESHOLD } from "../lib/relevance.js"
@@ -288,10 +288,117 @@ function EditCompanyModal({ open, onClose, account, onSave }) {
   )
 }
 
-function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, onToggleClaim, sentiment, contacts = [] }) {
+// Per-contact LinkedIn role research (api/account-contacts.js's
+// resource=role-research) — Bright Data's scrape is an async job, so
+// this owns its own poll loop: trigger, then re-check every 4s until
+// ready. Checks once on mount (a plain GET, no trigger) so a brief
+// cached from an earlier visit shows immediately without a click.
+function ContactRoleBrief({ linkedinUrl }) {
+  const [state, setState] = useState({ status: "idle" })
+  const pollRef = useRef(null)
+
+  const checkStatus = () => {
+    fetch(`/api/account-contacts?resource=role-research&linkedinUrl=${encodeURIComponent(linkedinUrl)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "ready" || data.status === "error") {
+          clearInterval(pollRef.current)
+          pollRef.current = null
+        }
+        setState(data)
+      })
+      .catch(() => {
+        clearInterval(pollRef.current)
+        pollRef.current = null
+      })
+  }
+
+  useEffect(() => {
+    checkStatus()
+    return () => pollRef.current && clearInterval(pollRef.current)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linkedinUrl])
+
+  const startResearch = () => {
+    setState({ status: "pending" })
+    fetch("/api/account-contacts?resource=role-research", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ linkedinUrl }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        setState(data)
+        if (data.status === "pending" && !pollRef.current) {
+          pollRef.current = setInterval(checkStatus, 4000)
+        }
+      })
+      .catch(() => setState({ status: "error", errorMessage: "Couldn't start role research" }))
+  }
+
+  if (state.status === "idle" || state.status === "not_started") {
+    return (
+      <button
+        type="button"
+        onClick={startResearch}
+        className="mt-1.5 text-2xs font-semibold text-brand-600 hover:underline dark:text-brand-400"
+      >
+        Research role
+      </button>
+    )
+  }
+
+  if (state.status === "pending") {
+    return <p className="mt-1.5 text-2xs text-body-500 dark:text-zinc-500">Researching role…</p>
+  }
+
+  if (state.status === "error") {
+    return (
+      <p className="mt-1.5 text-2xs text-rose-600 dark:text-rose-400">
+        {state.errorMessage ?? "Research failed"} —{" "}
+        <button type="button" onClick={startResearch} className="font-semibold hover:underline">
+          Retry
+        </button>
+      </p>
+    )
+  }
+
+  const brief = state.brief
+  if (!brief) return null
+
+  return (
+    <div className="mt-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-2xs dark:border-zinc-800 dark:bg-zinc-900/40">
+      <p className="font-bold text-ink-900 dark:text-zinc-50">{brief.vertical}</p>
+      <p className="mt-1 text-body-600 dark:text-zinc-300">{brief.roleSummary}</p>
+      {brief.kpis?.length > 0 && (
+        <p className="mt-1.5">
+          <span className="font-semibold text-body-500 dark:text-zinc-400">KPIs: </span>
+          {brief.kpis.join(", ")}
+        </p>
+      )}
+      {brief.focus?.length > 0 && (
+        <p className="mt-1">
+          <span className="font-semibold text-body-500 dark:text-zinc-400">Focus: </span>
+          {brief.focus.join(", ")}
+        </p>
+      )}
+      {brief.outreachAngle && <p className="mt-1.5 italic text-body-600 dark:text-zinc-300">&ldquo;{brief.outreachAngle}&rdquo;</p>}
+    </div>
+  )
+}
+
+function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, onToggleClaim, sentiment, contacts = [], onFindContacts }) {
   const [tab, setTab] = useState("overview")
   const [group, setGroup] = useState("all")
   const [editOpen, setEditOpen] = useState(false)
+  const [findState, setFindState] = useState({ status: "idle" })
+
+  const handleFindContacts = () => {
+    setFindState({ status: "pending" })
+    onFindContacts(account.key)
+      .then(() => setFindState({ status: "idle" }))
+      .catch((err) => setFindState({ status: "error", message: err.message }))
+  }
   const orgChart = useOrgChart(account?.key)
   const { profile: myCompany } = useMyCompany()
   const approachAngles = useMemo(() => strategicAngles(myCompany), [myCompany])
@@ -351,7 +458,10 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
   // thing to click into and immediately bounce off.
   const tabsWithData = TABS.map((t) => {
     if (t.id === "sentiment") return { ...t, hasData: Boolean(sentiment) }
-    if (t.id === "contacts") return { ...t, hasData: contacts.length > 0 }
+    // Visible for any tracked account (even at zero contacts, so "Find
+    // ANZ contacts" is reachable) and for any account that already has
+    // contacts regardless of tracked status.
+    if (t.id === "contacts") return { ...t, hasData: account.managed || contacts.length > 0 }
     if (t.id === "tech") return { ...t, hasData: false }
     return t
   })
@@ -1204,43 +1314,59 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
       )}
 
       {tab === "contacts" && (
-        contacts.length > 0 ? (
-          <Card className="divide-y divide-slate-100 dark:divide-zinc-800">
-            {contacts.map((contact) => (
-              <div key={`${contact.fullName}-${contact.email ?? contact.linkedinUrl}`} className="flex items-start gap-3 p-4">
-                <IconBadge icon={UsersIcon} tone="bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-dense font-bold text-ink-900 dark:text-zinc-50">{contact.fullName}</p>
-                  {contact.title && (
-                    <p className="text-xs text-body-500 dark:text-zinc-400">{contact.title}</p>
-                  )}
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                    {contact.email && (
-                      <span className="text-body-600 dark:text-zinc-300">{contact.email}</span>
+        <>
+          {onFindContacts && (
+            <div className="mb-3 flex items-center gap-2">
+              <Button variant="secondary" onClick={handleFindContacts} disabled={findState.status === "pending"}>
+                {findState.status === "pending" ? "Finding contacts…" : "Find ANZ contacts"}
+              </Button>
+              {findState.status === "error" && (
+                <span className="text-2xs text-rose-600 dark:text-rose-400">{findState.message}</span>
+              )}
+            </div>
+          )}
+
+          {contacts.length > 0 ? (
+            <Card className="divide-y divide-slate-100 dark:divide-zinc-800">
+              {contacts.map((contact) => (
+                <div key={`${contact.fullName}-${contact.email ?? contact.linkedinUrl}`} className="flex items-start gap-3 p-4">
+                  <IconBadge icon={UsersIcon} tone="bg-slate-100 text-slate-600 dark:bg-zinc-800 dark:text-zinc-400" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-dense font-bold text-ink-900 dark:text-zinc-50">{contact.fullName}</p>
+                    {contact.title && (
+                      <p className="text-xs text-body-500 dark:text-zinc-400">{contact.title}</p>
                     )}
-                    {contact.linkedinUrl && (
-                      <a
-                        href={contact.linkedinUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-brand-600 hover:underline dark:text-brand-400"
-                      >
-                        LinkedIn
-                      </a>
-                    )}
+                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                      {contact.email && (
+                        <span className="text-body-600 dark:text-zinc-300">{contact.email}</span>
+                      )}
+                      {contact.linkedinUrl && (
+                        <a
+                          href={contact.linkedinUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-brand-600 hover:underline dark:text-brand-400"
+                        >
+                          LinkedIn
+                        </a>
+                      )}
+                    </div>
+                    {contact.linkedinUrl && <ContactRoleBrief linkedinUrl={contact.linkedinUrl} />}
                   </div>
+                  <Pill tone="slate">
+                    {contact.source === "apollo" ? "Apollo" : contact.source === "zoominfo" ? "ZoomInfo" : "Lusha"}
+                  </Pill>
                 </div>
-                <Pill tone="slate">{contact.source === "zoominfo" ? "ZoomInfo" : "Lusha"}</Pill>
-              </div>
-            ))}
-          </Card>
-        ) : (
-          <NotIngested
-            title="Contacts — not available from this pipeline"
-            note="The reference product resolves buying-group contacts and tracks job moves. This pipeline has no people data at all — it ingests company-level news only. Populating this would mean wiring a contact source into ingest, e.g. a ZoomInfo or Lusha connector."
-            sources={["ZoomInfo contact search", "Lusha buying-group search", "LinkedIn Sales Navigator"]}
-          />
-        )
+              ))}
+            </Card>
+          ) : (
+            <NotIngested
+              title="No contacts yet"
+              note='Click "Find ANZ contacts" above to pull real people at this company from Apollo, filtered to Australia/New Zealand.'
+              sources={["Apollo people search", "Bright Data LinkedIn enrichment"]}
+            />
+          )}
+        </>
       )}
 
       {tab === "tech" && (
