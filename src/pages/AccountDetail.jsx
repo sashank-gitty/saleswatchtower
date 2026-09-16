@@ -42,6 +42,12 @@ import {
   SectionTitle,
   EmptyState,
   NotIngested,
+  Modal,
+  Field,
+  TextInput,
+  Textarea,
+  Radio,
+  Toggle,
 } from "../components/ui.jsx"
 import {
   TrendUpIcon,
@@ -58,6 +64,7 @@ import {
   QuoteIcon,
   ArrowUpIcon,
   ArrowDownIcon,
+  PencilIcon,
 } from "../components/icons.jsx"
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
@@ -215,9 +222,76 @@ function TrendStat({ trend }) {
   )
 }
 
+// Same fields as Accounts.jsx's "Track a Company" form (AddCompanyModal),
+// prefilled from the account already being tracked — that form only ever
+// runs once, at the moment you first track a company, so there was no way
+// to go back and add a ticker or change the note afterward. Submits
+// through the same onToggleClaim (useCompanies.js's setCompany), which
+// already upserts, so editing an already-tracked company just overwrites
+// its row instead of needing a separate update path.
+function EditCompanyModal({ open, onClose, account, onSave }) {
+  const [status, setStatus] = useState(account.status)
+  const [isCompetitor, setIsCompetitor] = useState(account.isCompetitor)
+  const [asxTicker, setAsxTicker] = useState(account.asxTicker ?? "")
+  const [stockTicker, setStockTicker] = useState(account.stockTicker ?? "")
+  const [note, setNote] = useState(account.note ?? "")
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    onSave({
+      status,
+      isCompetitor,
+      note: note.trim() || null,
+      asxTicker: asxTicker.trim() || null,
+      stockTicker: stockTicker.trim() || null,
+    })
+    onClose()
+  }
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Edit ${account.name}`}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="Status">
+          <div className="flex flex-wrap gap-4">
+            <Radio name="edit-status" value="prospect" checked={status === "prospect"} onChange={() => setStatus("prospect")} label="Prospect" />
+            <Radio name="edit-status" value="customer" checked={status === "customer"} onChange={() => setStatus("customer")} label="Customer" />
+            <Radio name="edit-status" value="" checked={status === null} onChange={() => setStatus(null)} label="Not set" />
+          </div>
+        </Field>
+        <Toggle
+          checked={isCompetitor}
+          onChange={setIsCompetitor}
+          label="This is a competitor, not a prospect (track for positioning, not outreach)"
+        />
+        <Field label="ASX ticker (optional)" hint="Only if this company is listed on the Australian Securities Exchange.">
+          <TextInput value={asxTicker} onChange={(e) => setAsxTicker(e.target.value)} placeholder="e.g. CBA" />
+        </Field>
+        <Field
+          label="Stock ticker (optional)"
+          hint="US-listed companies only (e.g. CVX for Chevron) — pulls a real stock price, market cap, and next earnings date. We also try to fill this in automatically when research finds one; set it here to override or add it sooner."
+        >
+          <TextInput value={stockTicker} onChange={(e) => setStockTicker(e.target.value)} placeholder="e.g. CVX" />
+        </Field>
+        <Field label="Why you're tracking this (optional)">
+          <Textarea value={note} onChange={(e) => setNote(e.target.value)} rows={3} />
+        </Field>
+        <div className="flex items-center gap-2 pt-1">
+          <Button type="submit" variant="primary">
+            Save
+          </Button>
+          <Button type="button" variant="ghost" onClick={onClose}>
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
 function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, onToggleClaim, sentiment, contacts = [] }) {
   const [tab, setTab] = useState("overview")
   const [group, setGroup] = useState("all")
+  const [editOpen, setEditOpen] = useState(false)
   const orgChart = useOrgChart(account?.key)
   const { profile: myCompany } = useMyCompany()
   const approachAngles = useMemo(() => strategicAngles(myCompany), [myCompany])
@@ -385,6 +459,12 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
             <RefreshIcon className="h-4 w-4" />
             Refresh
           </Button>
+          {isClaimed?.(account.key) && onToggleClaim && (
+            <Button variant="secondary" onClick={() => setEditOpen(true)}>
+              <PencilIcon className="h-4 w-4" />
+              Edit
+            </Button>
+          )}
         </div>
       </div>
 
@@ -1168,6 +1248,15 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
           title="Account Technologies — not available from this pipeline"
           note="The reference product infers an account's tech stack from job postings that name tools. This pipeline ingests no job postings, so there is no evidence base to build a stack from. Inferring one from news headlines would be guesswork presented as fact about a real company's infrastructure."
           sources={["Job posting feeds", "BuiltWith / HG Insights", "ZoomInfo technographics"]}
+        />
+      )}
+
+      {editOpen && (
+        <EditCompanyModal
+          open={editOpen}
+          onClose={() => setEditOpen(false)}
+          account={account}
+          onSave={(options) => onToggleClaim(account.key, account.name, true, options)}
         />
       )}
     </>

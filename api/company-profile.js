@@ -56,6 +56,18 @@ export default async function handler(req, res) {
       )
       ON CONFLICT (company_key) DO NOTHING
     `
+
+    // Auto-fill the stock ticker if research found a real one and the
+    // company doesn't already have one set — WHERE stock_ticker IS NULL
+    // means this never overwrites a value someone typed in by hand
+    // (e.g. via the Edit modal), it only fills a gap.
+    if (profile.stockTicker) {
+      await sql`
+        UPDATE tracked_companies SET stock_ticker = ${profile.stockTicker}
+        WHERE company_key = ${companyKey} AND stock_ticker IS NULL
+      `
+    }
+
     res.status(200).json({ found: true })
   } catch (err) {
     if (err instanceof BudgetExceededError) {

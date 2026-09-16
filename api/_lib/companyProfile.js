@@ -25,6 +25,7 @@ Search the web for the real company named in the request, then respond with ONLY
 - "foundedYear": integer year founded. Omit if unknown.
 - "competitors": a JSON array of up to 5 real company names that genuinely compete with this one (real named companies you found evidence for, not a generic category). Empty array if you can't confirm any.
 - "competitivePosition": 1-2 sentences on how this company is actually positioned relative to its named competitors (market share, pricing, a named differentiator) — only if you find real evidence. Omit entirely rather than guessing at a competitive dynamic you can't support.
+- "stockTicker": the real stock ticker symbol (e.g. "CVX"), ONLY if the company is publicly traded on a US exchange (NYSE/NASDAQ). Omit if privately held, or if it's only listed on a non-US exchange (e.g. the ASX) — a separate field elsewhere in this app handles ASX-listed companies specifically.
 - "sourceUrls": a JSON array of the real URLs you actually drew this from.
 
 Every field is optional except you must make a genuine effort to find each one. Omit a field entirely rather than guessing, inventing, or writing "unknown" — a missing field is honest, a made-up one is not. If you cannot find the company at all (name too generic, no real company matches), respond with exactly: {"notFound": true}
@@ -187,6 +188,7 @@ export async function researchCompanyProfile(companyName) {
     foundedYear: Number.isInteger(parsed.foundedYear) ? parsed.foundedYear : null,
     competitors: Array.isArray(parsed.competitors) ? parsed.competitors.filter((c) => typeof c === "string").slice(0, 5) : [],
     competitivePosition: typeof parsed.competitivePosition === "string" ? parsed.competitivePosition : null,
+    stockTicker: typeof parsed.stockTicker === "string" ? parsed.stockTicker.toUpperCase() : null,
     sourceUrls: Array.isArray(parsed.sourceUrls) ? parsed.sourceUrls.filter((u) => typeof u === "string") : [],
   }
 }

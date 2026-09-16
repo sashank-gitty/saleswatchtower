@@ -324,6 +324,9 @@ export function deriveAccounts(signals, companies = [], logoByKey = new Map(), n
         unreviewedCount: sorted.filter((s) => !s.reviewed).length,
         status: tracked?.status ?? (managed ? "prospect" : null),
         note: tracked?.note ?? null,
+        asxTicker: tracked?.asxTicker ?? null,
+        stockTicker: tracked?.stockTicker ?? null,
+        isCompetitor: tracked?.isCompetitor ?? false,
         managed,
         // Company-snapshot fields (api/_lib/companyProfile.js) — the
         // fuller snapshot fields below are only ever fetched for a
