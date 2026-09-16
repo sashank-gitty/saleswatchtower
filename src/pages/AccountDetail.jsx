@@ -89,11 +89,11 @@ const TABS = [
   { id: "overview", label: "Overview" },
   { id: "signals", label: "Signals" },
   { id: "value", label: "Value" },
-  { id: "prep", label: "Prep" },
+  { id: "contacts", label: "Contacts" },
   { id: "orgchart", label: "Org Chart" },
   { id: "meddpicc", label: "MEDDPICC" },
+  { id: "prep", label: "Prep" },
   { id: "sentiment", label: "Sentiment" },
-  { id: "contacts", label: "Contacts" },
   { id: "tech", label: "Tech" },
 ]
 
@@ -581,9 +581,10 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
       {/* Company snapshot — real firmographics from api/_lib/companyProfile.js,
           shown right after the banner rather than in a tab, so it's the
           first thing you see when you open an account, not something you
-          have to go find. Renders nothing at all when there's no profile
-          yet (not tracked, or research hasn't landed) — no placeholder
-          clutter for a fact that just isn't available. */}
+          have to go find. Always rendered (even with a pending
+          placeholder) so every account page has the same structure —
+          research landing is what fills it in, not what decides
+          whether the section exists at all. */}
       {account.industry || account.description || account.headquarters || account.employeeCount ? (
         <Card className="mb-5 p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
@@ -637,7 +638,16 @@ function AccountDetail({ account, onOpenSignal, loading, isClaimed, claimedAt, o
             )}
           </div>
         </Card>
-      ) : null}
+      ) : (
+        <Card className="mb-5 p-5">
+          <SectionTitle>Company Snapshot</SectionTitle>
+          <p className="text-dense text-body-500 dark:text-zinc-500">
+            {account.managed
+              ? "Research hasn't landed for this company yet — it runs automatically once a company is tracked, usually within a minute."
+              : "No snapshot yet — track this account to trigger real firmographic research."}
+          </p>
+        </Card>
+      )}
 
       {/* Persistently visible regardless of which tab is open below —
           matches how Gong/Nooks keep their account chat reachable at
